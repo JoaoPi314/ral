@@ -56,4 +56,27 @@ Com isso, vamos começar a falar sobre a modelagem de registradores em RAL de fa
 
 ## Register_fields
 
+Campos são utilizados para representar sequências contínuas de bits. Dentro de um mesmo registrador podem haver vários campos, e cada um pode ter sua política de acesso particular.
+
+Em SystemVerilog, declaramos um campo utilizando a palavra-chave `uvm_reg_field`. Então, vamos começar a modelar nosso banco de registradores declarando os respectivos campos. Isso será feito em um arquivo de registrador, que será explicado na próxima sessão. Vou fazer pra o registrador **PLAYER** e o raciocínio é o mesmo para os demais, ficando como exercício aí pra quem quiser fazer (Na sessão **Código Fonte** você pode encontrar o código completo desse mini-projeto).
+
+```c
+class dnd_player_reg extends uvm_reg;
+    `uvm_component_utils(dnd_player_reg)
+
+    rand uvm_reg_field max_health;
+    rand uvm_reg_field current_health;
+    rand uvm_reg_field is_dead;
+    rand uvm_reg_field initiative;
+
+    ...
+
+```
+
+O resto você vai descobrir na próxima sessão, que é agora!
+
+## Register
+
+
+
 
