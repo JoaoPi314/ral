@@ -15,8 +15,8 @@ ignore = ["node_modules/"]
 generate_rss = true
 website_title = "RAL Hands-on"
 website_descr = "Hands-on to implement a simple RAL model"
-website_url   = "https://joaopi314.github.io/estudos-ral/"
-prepath = "estudos-ral"
+website_url   = "https://tlienart.github.io/FranklinTemplates.jl/"
+prepath = "ral"
 +++
 
 <!--
