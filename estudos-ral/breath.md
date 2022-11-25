@@ -27,8 +27,6 @@ The interface is very simple. The block diagram is shown below:
 
 ![Interface diagram](/assets/interface.png)
 
-The following table describes the ports:
-
 
 
 
