@@ -140,7 +140,7 @@ class dnd_reg_block extends uvm_reg_block;
 
         reg_map.add_reg(
             .rg(reg_inventory), 
-            .offset(8'h0), 
+            .offset(8'h4), 
             .rights("RW")
         );
 
@@ -148,5 +148,157 @@ class dnd_reg_block extends uvm_reg_block;
 
 endclass : dnd_reg_block
 
+
+```
+
+## dnd\_reg\_adapter.sv
+
+```cpp
+
+class dnd_reg_adapter extends uvm_reg_adapter;
+    `uvm_object_utils(dnd_reg_adapter)
+
+
+    function new(string name = "dnd_reg_adapter");
+        super.new(.name(name));
+    endfunction : new
+
+    virtual function uvm_sequence_item reg2bus(const ref uvm_reg_bus_op rw) //Const protects from changing
+        
+        // Instantiates the transaction
+        dnd_seq_item tx;
+        tx = dnd_seq_item::type_id::create("tx");
+
+        // Sets the command
+        tx.write_en = (rw.kind == UVM_WRITE)
+
+        // Sets the address
+        tx.data_addr = rw.addr;
+
+
+        // Sets the data
+        if(tx.write_en)
+            tx.data_w = rw.data;
+        else
+            tx.data_r = rw.data;
+
+        return tx;
+
+    endfunction : reg2bus
+
+    virtual function void bus2reg(uvm_sequence_item bus_item, ref uvm_reg_bus_op rw); // Note that now the rw will be modified, so the const wasn't used
+
+        dnd_seq_item tx;
+
+        // Casting the bus_item into the tx
+
+        assert($cast(tx, bus_item))
+            else `uvm_fatal("", "Something happened and I cannot convert the bus_item into the uvm_sequence_item tx")
+
+        // Setting values into registers
+
+        if(tx.wr_en == 1'b1)
+            rw.kind = UVM_WRITE;
+        else
+            rw.kind == UVM_READ;
+
+        rw.addr = tx.data_addr;
+        rw.data = tx.rdata; // We do'nt need to worry about the wdata, the bus2reg will only receive the output from DUT, so the rdata
+
+        rw_status = UVM_IS_OK;
+
+    endfunction : bus2reg
+
+endclass : dnd_reg_adapter
+
+
+
+```
+
+
+## dnd\_agent.sv
+
+
+```cpp
+    
+typedef uvm_sequencer#(dnd_transaction) dnd_sequencer;
+
+class dnd_agent extends uvm_agent;
+    `uvm_component_utils(dnd_agent)
+
+    uvm_analysis_port#(dnd_transaction) dnd_ap;
+
+    dnd_driver dnd_drv;
+    dnd_monitor dnd_mon;
+    dnd_sequencer dnd_sqr;
+
+    dnd_reg_adapter dnd_adapter;
+
+
+    function new(string name="dnd_agent");
+        super.new(.name(name));
+        dnd_ap = new("dnd_ap");
+    endfunction : new
+
+    virtual function void build_phase(uvm_phase phase);
+        super.build_phase(phase);
+
+        dnd_drv = dnd_driver::type_id::create("dnd_drv", this);
+        dnd_mon = dnd_monitor::type_id::create("dnd_mon", this);
+        dnd_sqr = dnd_sequencer::type_id::create("dnd_sqr", this);
+
+        dnd_adapter = dnd_reg_adapter.type_id::create("dnd_adapter");
+    endfunction : build_phase
+
+    virtual function void connect_phase(uvm_phase phase);
+        super.connect_phase(phase);
+
+        dnd_drv.seq_item_port.connect(dnd_sqr.seq_item_export);
+        dnd_mon.dnd_ap.connect(dnd_ap);
+
+    endfunction : connect_phase
+endclass : dnd_agent
+
+```
+
+## dnd\_environment.sv
+
+```cpp
+typedef uvm_reg_predictor#(dnd_transaction) dnd_reg_predictor
+
+class dnd_environment extends uvm_env;
+    `uvm_component_utils(dnd_environment)
+
+    dnd_agent dnd_agt;
+
+    //Instantiate
+    dnd_reg_predictor dnd_pred;
+
+    function new(string name="dnd_environment");
+        super.new(.name(name));
+    endfunction : new
+
+    virtual function void build_phase(uvm_phase phase);
+        super.build_phase(phase);
+
+        dnd_agt = dnd_agent::type_id::create("dnd_agt", this);
+
+        // Build
+        dnd_pred = dnd_reg_predictor::type_id::create("dnd_pred", this);
+    endfunction : build_phase
+
+
+    virtual function void connect_phase(uvm_phase phase);
+        super.connect_phase(phase);
+
+        // Connect adapter
+        dnd_pred.adapter = dnd_agt.dnd_adapter;
+
+        // connect analysis port from agent(monitor transaction) to predictor
+        dnd_agt.dnd_ap.connect(dnd_pred.bus_in);
+
+    endfunction : connect_phase 
+
+endclass : dnd_environment
 
 ```

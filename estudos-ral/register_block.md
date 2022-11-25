@@ -49,7 +49,13 @@ Where each value is described in following tables:
 | DAMAGE    | [15:10]     | Weapon damage.                                                                                     | RO         |
 | WEAPON    | [9:0]       | Weapon used. Each number represents a weapon (Not mapped to a name, but use your damn imagination) | WR         |
 
-Okay, so now we can start talking about modeling these registes with RAL.
+Okay, so now we can start talking about modeling these registes with RAL. But before, let's take a look in our ambient:
+
+![UVM environment](/assets/zero_percent_diagram.png)
+
+Everything is red because we didn't implement any component, so let's start coloring this diagram.
+
+> You don't need to start the entire ambient with RAL components, in this case I'm doing this because the main goal of this Hands-on is to guide you into insert RAL in your ambient, explaining how each component works. The more general components won't be detailed, but the complete code will be shown somewhere in the hands-on.
 
 ## Register_fields
 
@@ -108,7 +114,7 @@ Now that we have declared our fields and defined the Constructor of our register
             .reset(0), // Defines the reset value of the field
             .has_reset(1), // Tells if the field resets when a reset is applied
             .is_rand(1), // Allows field randomization
-            .individually_accessible(0) // When write() is called, the entire register is written
+            .individually_accessible(1) // When write() is called, the entire register is written
         );
 
 
@@ -119,9 +125,9 @@ Now that we have declared our fields and defined the Constructor of our register
 At this point, you may have noticed that the process is repetitive and boooring. We are enginneers, and we are programmers. Everything that is repetitive and boring we can transform into code to automatize. Let's automatize the configure write with a little script in julia language.
 
 ```julia:./register_auto.jl
-current_health = ["current_health", "this", "6", "4", "RW", "0", "0", "1", "1", "0"]
-is_dead = ["is_dead", "this", "1", "3", "RO", "1", "0", "1", "1", "0"]
-initiative = ["initiative", "this", "3", "0", "RO", "1", "0", "1", "1", "0"]
+current_health = ["current_health", "this", "6", "4", "RW", "0", "0", "1", "1", "1"]
+is_dead = ["is_dead", "this", "1", "3", "RO", "1", "0", "1", "1", "1"]
+initiative = ["initiative", "this", "3", "0", "RO", "1", "0", "1", "1", "1"]
 
 player = [current_health, is_dead, initiative]
 
@@ -237,7 +243,7 @@ we will use the function `add_reg()` to add each register.
 
         reg_map.add_reg(
             .rg(reg_inventory), 
-            .offset(8'h0), 
+            .offset(8'h4), 
             .rights("RW")
         );
 
@@ -246,5 +252,10 @@ we will use the function `add_reg()` to add each register.
 endclass : dnd_reg_block
 
 ```
+And now, we have our first component written, the UVM diagram now is:
+
+
+![UVM environment](/assets/some_percent_diagram_01.png)
+
 
 In the next section, we will se what is the adapter and how it works.
