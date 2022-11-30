@@ -38,8 +38,8 @@ Where each value is described in following tables:
 | **Field** | **Position**|                                                                      **Description**                                                                   | **Access** |
 |:---------:|:-----------:|:------------------------------------------------------------------------------------------------------------------------------------------------------:|------------|
 | Reserved  | [15:6]      | Reserved space                                                                                                                                         | --         |
-| DEBUFFS   | [5:4]       | DEBUFF list:\\ 2'b00 -> Poisoned\\ 2'b01 -> Stunned\\ 2'b10 -> Sleeping\\ 2'b11 -> Confused                                                            | RO         |
-| BUFFS     | [3:2]       | BUFF list:\\ 2'b00 -> Advantage on attack\\ 2'b01 -> CA bonus\\ 2'b10 -> Saving throws advantage \\2'b11 -> Temp. life                                 | RO         |
+| DEBUFFS   | [5:4]       | DEBUFF list:\\ 2'b00 -> None\\ 2'b01 -> Stunned\\ 2'b10 -> Sleeping\\ 2'b11 -> Poisoned                                                            | WR         |
+| BUFFS     | [3:2]       | BUFF list:\\ 2'b00 -> None\\ 2'b01 -> Haste\\ 2'b10 -> Saving throws advantage \\2'b11 -> Temp. life                                 | WR         |
 | ACTION    | [1:0]       | Action list:\\ 2'b00 -> Do nothing 2'b01 -> Move 2'b10 -> Attack 2'b11 -> Take damage                                                                  | WR         |
 
 - To **INVENTORY** register:

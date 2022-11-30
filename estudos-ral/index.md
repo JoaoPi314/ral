@@ -17,6 +17,13 @@ each part and run it to see things happening.
 
 Basically, this hands-on will be divided into some pages:
 
-- **Register Blocks** will tell more about the register bank in this case and how to model it using the RAL components
-- **Adapter** will tell more about how the RAL transactions communicate with Interface transactions
-- 
+- **Register Blocks** will tell more about the register bank in this case and how to model it using the RAL components;
+- **Adapter** will tell more about how the RAL transactions communicate with Interface transactions;
+- **Agent** will teach which RAL components must be inserted in agent;
+- **Predictor** will tell more about the function of the predictor;
+- **Env** will teach which RAL components must be inserted in Environment;
+- **Take a Breath** is a section that will show the other UVM components that are not part of the RAL, it is a optional section just to make a pause showing new stuffs
+- **Source code** will keep all the code developed during the hands-on.
+
+
+**Obs**: I'm not a RAL expert, this hands-on was developed during my RAL studying. So, feel free to report any mistake!

@@ -302,3 +302,45 @@ class dnd_environment extends uvm_env;
 endclass : dnd_environment
 
 ```
+## dnd\_if.sv
+
+```c
+interface dnd_if(input logic clk, rst_n);
+
+    logic        write_en;
+    logic [31:0] data_w;
+    logic [11:0] data_addr;
+    logic [31:0] data_r;
+
+
+
+    // Driver clocking block
+
+    clocking drv_cb @(posedge clk);
+        default input #1 output #1;
+
+        output write_en;
+        output data_w;
+        output data_addr;
+        input  data_r;
+    endclocking
+
+    // Monitor clocking block
+
+    clocking mon_cb @(posedge clk);
+        default input #1 output #1;
+
+        output data_r;
+        input  write_en;
+        input data_w;
+        input data_addr;
+    endclocking 
+
+    // Modports
+    modport mst (clocking drv_cb, input clk, rst_n);
+
+    modport slv(clocking mon_cb, input clk, rst_n);
+
+endinterface : dnd_if
+
+```
