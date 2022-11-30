@@ -344,3 +344,91 @@ interface dnd_if(input logic clk, rst_n);
 endinterface : dnd_if
 
 ```
+
+## dnd\_driver.sv
+
+```c
+typedef virtual dnd_if dnd_vif;
+
+class dnd_driver extends uvm_driver #(dnd_transaction);
+    `uvm_component_utils(dnd_driver)
+
+    dnd_vif vif;
+
+    function new (string name = "dnd_driver", uvm_component parent);
+        super.new(name, parent);
+    endfunction : new
+
+    function void build_phase(uvm_phase phase);
+        super.build_phase(phase);
+        if(!uvm_config_db#(dnd_vif)::get(this, "", "vif", vif))
+            `uvm_fatal("NO_VIF",{"virtual interface must be set for: ",get_full_name(),".vif"});
+    endfunction: build_phase
+
+
+    virtual task run_phase(uvm_phase phase);
+        dnd_transaction dnd_tr;
+        forever begin
+            seq_item_port.get_next(dnd_tr);
+            drive_tr(dnd_tr);
+            seq_item_port.item_done();
+        end
+    endtask : run_phase
+
+
+    virtual task drive_tr(dnd_transaction dnd_tr);
+
+        vif.mst.drv_cb.write_en <= dnd_tr.write_en;
+        vif.mst.drv_cb.data_addr <= dnd_tr.data_addr;
+        vif.mst.drv_cb.data_w <= dnd_tr.data_w;
+
+        @posedge(vif.mst.drv_cb.clk);
+    endtask : drive_tr
+
+endclass : dnd_driver
+
+```
+
+## dnd\_monitor.sv
+
+```c
+
+class dnd_monitor extends uvm_monitor;
+    `uvm_component_utils(dnd_monitor)
+
+    uvm_analysis_port #(dnd_transaction) dnd_ap;    
+
+    dnd_vif vif;
+
+    function new (string name = "dnd_monitor", uvm_component parent);
+        super.new(name, parent);
+        dnd_ap = new("dnd_ap", this);
+    endfunction : new
+
+    function void build_phase(uvm_phase phase);
+        super.build_phase(phase);
+    endfunction: build_phase
+
+
+    virtual task run_phase(uvm_phase phase);
+        forever begin
+            dnd_transaction dnd_tr;
+            @posedge(vif.slv.clk);
+            dnd_tr = dnd_transaction::type_id::create(.name("dnd_tr"));
+            
+            if(vif.monitor_cb.write_en) begin
+                dnd_tr.write_en = vif.monitor_cb.write_en;
+                dnd_tr.data_w = vif.monitor_cb.data_w;
+                dnd_tr.data_addr = vif.monitor_cb.data_addr;
+            end else
+                dnd_tr.data_r = vif.monitor_cb.data_r;
+
+            dnd_ap.write(dnd_tr);
+        end
+    endtask : run_phase
+
+endclass : dnd_monitor
+
+```
+
+
