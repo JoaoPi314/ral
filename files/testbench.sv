@@ -1,67 +1,36 @@
-//-------------------------------------------------------------------------
-//				www.verificationguide.com   testbench.sv
-//-------------------------------------------------------------------------
-//---------------------------------------------------------------
-import uvm_pkg::*;
-`include "uvm_macros.svh"
-//including interfcae and testcase files
-`include "dma_interface.sv"
-`include "dma_test.sv"
-//---------------------------------------------------------------
-
 module tbench_top;
 
-  //---------------------------------------
-  //clock and reset signal declaration
-  //---------------------------------------
   bit clk;
-  bit reset;
-  
-  //---------------------------------------
-  //clock generation
-  //---------------------------------------
+  bit rst_n;
+
   always #5 clk = ~clk;
-  
-  //---------------------------------------
-  //reset Generation
-  //---------------------------------------
+
   initial begin
-    reset = 1;
-    #5 reset =0;
+    rst_n = 1;
+    #5 rst_n = 0;
+    #5 rst_n = 1;
   end
+
+  cthulhu_interface intf(clk,rst_n);
   
-  //---------------------------------------
-  //interface instance
-  //---------------------------------------
-  dma_if intf(clk,reset);
-  
-  //---------------------------------------
-  //DUT instance
-  //---------------------------------------
-  DMA DUT (
+
+  cthulhu_manager DUT (
     .clk(intf.clk),
-    .reset(intf.reset),
+    .rst_n(intf.rst_n),
     .addr(intf.addr),
-    .wr_en(intf.wr_en),
+    .write_en(intf.write_en),
     .valid(intf.valid),
-    .wdata(intf.wdata),
-    .rdata(intf.rdata)
+    .data_w(intf.data_w),
+    .data_r(intf.data_r)
    );
   
-  //---------------------------------------
-  //passing the interface handle to lower heirarchy using set method 
-  //and enabling the wave dump
-  //---------------------------------------
+
   initial begin 
-    uvm_config_db#(virtual dma_if)::set(uvm_root::get(),"*","vif",intf);
-    //enable wave dump
+    uvm_config_db#(virtual cthulhu_interface)::set(uvm_root::get(),"*","vif", intf);
     $dumpfile("dump.vcd"); 
     $dumpvars;
   end
   
-  //---------------------------------------
-  //calling test
-  //---------------------------------------
   initial begin 
     run_test();
   end
