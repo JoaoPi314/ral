@@ -39,31 +39,18 @@ This is a struct with the following fields:
 
 So, let's code this function:
 
-```cpp
-	virtual function uvm_sequence_item reg2bus(const ref uvm_reg_bus_op rw) //Const protects from changing
-		
-		// Instantiates the transaction
-		dnd_seq_item tx;
-		tx = dnd_seq_item::type_id::create("tx");
+```verilog
+function uvm_sequence_item reg2bus(const ref uvm_reg_bus_op rw);
+	cthulhu_transaction tx;    
+	tx = cthulhu_transaction::type_id::create("tx");
+	
+	tx.write_en = (rw.kind == UVM_WRITE);
+	tx.addr  = rw.addr;
+	if (tx.write_en)  tx.data_w = rw.data;
+	if (!tx.write_en) tx.data_r = rw.data;
 
-		// Sets the command
-		tx.write_en = (rw.kind == UVM_WRITE)
-
-		// Sets the address
-		tx.data_addr = rw.addr;
-
-
-		// Sets the data
-		if(tx.write_en)
-			tx.data_w = rw.data;
-		else
-			tx.data_r = rw.data;
-
-		return tx;
-
-	endfunction : reg2bus
-
-
+	return tx;
+endfunction : reg2bus
 ```
 
 > When a register is read/written, the `uvm_reg_map` calls the `uvm_sequence_base::start_item()`, passing the object returned by `reg2bus()` function. 
@@ -72,94 +59,57 @@ So, let's code this function:
 
 It's the opposite idea of the `reg2bus()`. This function will convert a **Interface transaction** into a **RAL transaction**. Let's code:
 
-```cpp
+```verilog
+function void bus2reg(uvm_sequence_item bus_item, ref uvm_reg_bus_op rw);
+	cthulhu_transaction tx;
+	
+	assert( $cast(tx, bus_item) )
+	else `uvm_fatal("", "A bad thing has just happened in my_adapter")
 
-	virtual function void bus2reg(uvm_sequence_item bus_item, ref uvm_reg_bus_op rw); // Note that now the rw will be modified, so the const wasn't used
-
-		dnd_seq_item tx;
-
-		// Casting the bus_item into the tx
-
-		assert($cast(tx, bus_item))
-			else `uvm_fatal("", "Something happened and I cannot convert the bus_item into the uvm_sequence_item tx")
-
-		// Setting values into registers
-
-		if(tx.wr_en == 1'b1)
-			rw.kind = UVM_WRITE;
-		else
-			rw.kind == UVM_READ;
-
-		rw.addr = tx.data_addr;
-		rw.data = tx.rdata; // We do'nt need to worry about the wdata, the bus2reg will only receive the output from DUT, so the rdata
-
-		rw_status = UVM_IS_OK;
-
-	endfunction : bus2reg
+	rw.kind = tx.write_en ? UVM_WRITE : UVM_READ;
+	rw.addr = tx.addr;
+	rw.data = tx.data_r;
+	
+	rw.status = UVM_IS_OK;
+endfunction : bus2reg
 
 ```
 
 So, the rest of class is similar to every component of UVM. The complete code is shown below:
 
-```cpp
+```verilog
+class cthulhu_adapter extends uvm_reg_adapter;
+	`uvm_object_utils (cthulhu_adapter)
 
-class dnd_reg_adapter extends uvm_reg_adapter;
-	`uvm_object_utils(dnd_reg_adapter)
+	function new(string name = "cthulhu_adapter");
+		super.new(name);
+	endfunction
 
-
-	function new(string name = "dnd_reg_adapter");
-		super.new(.name(name));
-	endfunction : new
-
-	virtual function uvm_sequence_item reg2bus(const ref uvm_reg_bus_op rw) //Const protects from changing
+	function uvm_sequence_item reg2bus(const ref uvm_reg_bus_op rw);
+		cthulhu_transaction tx;    
+		tx = cthulhu_transaction::type_id::create("tx");
 		
-		// Instantiates the transaction
-		dnd_seq_item tx;
-		tx = dnd_seq_item::type_id::create("tx");
-
-		// Sets the command
-		tx.write_en = (rw.kind == UVM_WRITE)
-
-		// Sets the address
-		tx.data_addr = rw.addr;
-
-
-		// Sets the data
-		if(tx.write_en)
-			tx.data_w = rw.data;
-		else
-			tx.data_r = rw.data;
+		tx.write_en = (rw.kind == UVM_WRITE);
+		tx.addr  = rw.addr;
+		if (tx.write_en)  tx.data_w = rw.data;
+		if (!tx.write_en) tx.data_r = rw.data;
 
 		return tx;
-
 	endfunction : reg2bus
 
-	virtual function void bus2reg(uvm_sequence_item bus_item, ref uvm_reg_bus_op rw); // Note that now the rw will be modified, so the const wasn't used
+	function void bus2reg(uvm_sequence_item bus_item, ref uvm_reg_bus_op rw);
+		cthulhu_transaction tx;
+		
+		assert( $cast(tx, bus_item) )
+		else `uvm_fatal("", "A bad thing has just happened in my_adapter")
 
-		dnd_seq_item tx;
-
-		// Casting the bus_item into the tx
-
-		assert($cast(tx, bus_item))
-			else `uvm_fatal("", "Something happened and I cannot convert the bus_item into the uvm_sequence_item tx")
-
-		// Setting values into registers
-
-		if(tx.wr_en == 1'b1)
-			rw.kind = UVM_WRITE;
-		else
-			rw.kind == UVM_READ;
-
-		rw.addr = tx.data_addr;
-		rw.data = tx.rdata; // We do'nt need to worry about the wdata, the bus2reg will only receive the output from DUT, so the rdata
-
-		rw_status = UVM_IS_OK;
-
+		rw.kind = tx.write_en ? UVM_WRITE : UVM_READ;
+		rw.addr = tx.addr;
+		rw.data = tx.data_r;
+		
+		rw.status = UVM_IS_OK;
 	endfunction : bus2reg
-
-endclass : dnd_reg_adapter
-
-
+endclass : cthulhu_adapter
 
 ```
 

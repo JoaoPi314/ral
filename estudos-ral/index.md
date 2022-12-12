@@ -7,7 +7,7 @@
 
 In order to learn and consolidate this knowledge to anyone that want it, I'm doing
 this Hands-on that will follow my steps to build an UVM ambient from scratch using RAL.
-The DUT in this case will be a Dungeons & Dragons Character Manager (I like RPG thematic and studying things with
+The DUT in this case will be a Call of Cthulhu Life and Sanity Manager (I like RPG thematic and studying things with
 something that I like motivate me to go on). Below is the final UVM diagram for the environment. Our goal is to implement
 each part and run it to see things happening.
 

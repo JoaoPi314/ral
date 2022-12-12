@@ -15,39 +15,40 @@ tags = ["syntax", "code"]
 
 ## Overview
 
-Okay, one thing that I like is RPG, so I did this Hands-on about RAL focused in a small register bank with RPG theme.
-
 The bank is very simple. It has only three address (three registers), and it can be observed below:
 
 ![Register bank](/assets/memory_map.png)
 
 Where each value is described in following tables:
-- To **PLAYER** register:
+- To **LIFE** register:
 
 
 |    **Field**   | **Position**|                                                **Description**                                             | **Access** |
 |:--------------:|:-----------:|:----------------------------------------------------------------------------------------------------------:|:----------:|
-| MAX_HEALTH     | [15:10]     | Max Health Points to Player                                                                                | RO         |
-| CURRENT_HEALTH | [9:4]       | Current Health Points of Player                                                                            | WR         |
-| IS_DEAD        | 3           | 1 -> Fallen Player \\ 0 -> Player alive                                                                    | RO         |
-| INITIATIVE     | [2:0]       | Each value represents a modifier:\\ 3'b000 -> +0\\ 3'b001 -> +1\\ 3'b010 -> +2\\ And so on...              | RO         |
+| MAX_HEALTH     | [7:4]       | Max Health points to Player                                                                                | WO         |
+| CURRENT_HEALTH | [3:0]       | Current Health points of Player                                                                            | WO         |
+
+- To **SANITY** register:
 
 
-- To **ACTIONS** register:
+|    **Field**   | **Position**|                                                **Description**                                             | **Access** |
+|:--------------:|:-----------:|:----------------------------------------------------------------------------------------------------------:|:----------:|
+| MAX_SANITY     | [7:4]       | Max sanity points to Player                                                                                | WO         |
+| CURRENT_SANITY | [3:0]       | Current sanity points of Player                                                                            | WO         |
 
-| **Field** | **Position**|                                                                      **Description**                                                                   | **Access** |
-|:---------:|:-----------:|:------------------------------------------------------------------------------------------------------------------------------------------------------:|------------|
-| Reserved  | [15:6]      | Reserved space                                                                                                                                         | --         |
-| DEBUFFS   | [5:4]       | DEBUFF list:\\ 2'b00 -> None\\ 2'b01 -> Stunned\\ 2'b10 -> Sleeping\\ 2'b11 -> Poisoned                                                            | WR         |
-| BUFFS     | [3:2]       | BUFF list:\\ 2'b00 -> None\\ 2'b01 -> Haste\\ 2'b10 -> Saving throws advantage \\2'b11 -> Temp. life                                 | WR         |
-| ACTION    | [1:0]       | Action list:\\ 2'b00 -> Do nothing 2'b01 -> Move 2'b10 -> Attack 2'b11 -> Take damage                                                                  | WR         |
+- To **STATUS** register:
 
-- To **INVENTORY** register:
 
-| **Field** | **Position**|                                 **Description**                                                    | **Access** |
-|:---------:|:-----------:|:--------------------------------------------------------------------------------------------------:|------------|
-| DAMAGE    | [15:10]     | Weapon damage.                                                                                     | RO         |
-| WEAPON    | [9:0]       | Weapon used. Each number represents a weapon (Not mapped to a name, but use your damn imagination) | WR         |
+|    **Field**   | **Position**|                                                **Description**                                             | **Access** |
+|:--------------:|:-----------:|:----------------------------------------------------------------------------------------------------------:|:----------:|
+| RESERVED       | [7:6]       | Reserved fields                                                                                            | RO         |
+| IS_SANE        | 5           | 1'b1 if **CURRENT_SANITY** is greather than half of **MAX_SANITY**                                         | RO         |
+| IS_GOING_MAD   | 4           | 1'b1 if **CURRENT_SANITY** is lesser than half of **MAX_SANITY**                                           | RO         |
+| IS_SANE        | 3           | 1'b1 if **CURRENT_SANITY** is zero                                                                         | RO         |
+| IS_HEALTHY     | 2           | 1'b1 if **CURRENT_HEALTH** is greather than half of **MAX_HEALTH**                                         | RO         |
+| IS_WOUNDED     | 1           | 1'b1 if **CURRENT_HEALTH** is lesser than half of **MAX_HEALTH**                                           | RO         |
+| IS_DEAD        | 0           | 1'b1 if **CURRENT_HEALTH** is zero                                                                         | RO         |
+
 
 Okay, so now we can start talking about modeling these registes with RAL. But before, let's take a look in our ambient:
 
@@ -62,18 +63,18 @@ Everything is red because we didn't implement any component, so let's start colo
 Fields are used to represent contiguous bit sequences. One single register can contain more than one field, and each one have your particular access policy.
 
 In SystemVerilog, we declare a field using the keyword `uvm_reg_field`. so, let's start modeling our register bank declaring the respective fields. This will be done in a register file, that will be
-explained in the following sections. I'm gonna show how it is done to the **PLAYER** register, and you can implement to the other registers following the same logic. The complete code will be available at **Source Code** page.
+explained in the following sections. I'm gonna show how it is done to the **LIFE** register, and you can implement to the other registers following the same logic. The complete code will be available at [Source Code](/source_code/) page.
 
-```cpp
-class dnd_player_reg extends uvm_reg;
-    `uvm_object_utils(dnd_player_reg)
-
-    //Fields declaration
-    rand uvm_reg_field max_health;
-    rand uvm_reg_field current_health;
-    rand uvm_reg_field is_dead;
-    rand uvm_reg_field initiative;
-
+```verilog
+class cthulhu_life_reg extends uvm_reg;
+	`uvm_object_utils(cthulhu_life_reg)
+   
+	//***************************************
+	//* Field instantiation                 *
+	//***************************************
+	rand uvm_reg_field current_health;
+	rand uvm_reg_field max_health;
+	
     ...
 
 ```
@@ -84,55 +85,55 @@ The rest you will discover in the next section, and it is now!
 A register is basically a group of fields in a same address in a given memory map. Taking our example, we have three registers. Each one will be modeled in a class that will
 extend the `uvm_reg` class from UVM. At this class, first we declare the fields (Already done), then we define the constructor of the class. The `super.new()` will receive some parameters, as show below:
 
-```cpp
+```verilog
 
-    function new(string name="dnd_player_reg");
-        super.new(.name(name), .n_bits(16), .has_coverage(UVM_NO_COVERAGE));
-    endfunction : new
+
+function new (string name = "cthulhu_life_reg");
+	super.new(.name(name), .n_bits(8), .has_coverage(UVM_NO_COVERAGE));
+endfunction
 
 ```
 
-the first parameter doesn't need explanation, it is just the name associated to the object. The second parameter (`n_bits`) will tell the size of that register in bits, and the last parameter (`has_coverage`) will tell if this register will be mapped to a coverage.
+The first parameter doesn't need explanation, it is just the name associated to the object. The second parameter (`n_bits`) will tell the size of that register in bits, and the last parameter (`has_coverage`) will tell if this register will be mapped to a coverage.
 
 Now that we have declared our fields and defined the Constructor of our register, let's configure the fields using the following function:
 
 > Do not think that this `build()` is related to the `build_phase()` function of `uvm_component`. The `uvm_reg` is not an `uvm_component`, it is an `uvm_object` (A parent class of `uvm_component`, so it doesn't have the methods of child).
 
 
-```cpp
-    virtual function void build();
-        // Building the field (Same way that we build every object in UVM)
-        max_health = uvm_reg_field::type_id::create("max_health")
+```verilog
+    
+virtual function void build();
+    
+    // Creation of the field
+    max_health = uvm_reg_field::type_id::create("max_health");   
 
-        // Configuring the field
-        max_health.configure(
-            .parent(this), //Just repeat this :D
-            .size(6), // The size of field is defined here, in bits
-            .lsb_pos(10), // The position of LSB bit of the field
-            .access("RO"), // Access policy. In this case, it is Read Only
-            .volatile(1), // Tells if this field can be changed internally
-            .reset(0), // Defines the reset value of the field
-            .has_reset(1), // Tells if the field resets when a reset is applied
-            .is_rand(1), // Allows field randomization
-            .individually_accessible(1) // When write() is called, the entire register is written
-        );
+    // Configuration of the field
+    max_health.configure(.parent(this), // Parent of the field
+                        .size(4), // The size of field is defined here, in bits
+                        .lsb_pos(4), // The position of LSB bit of the field
+                        .access("WO"),  // Access policy. In this case, it is Write Only
+                        .volatile(0),  // Tells if this field can be changed internally 
+                        .reset(4'hf),  // Defines the reset value of the field
+                        .has_reset(1), // Tells if the field resets when a reset is applied
+                        .is_rand(1), // Allows field randomization
+                        .individually_accessible(0)); // When write() is called, the entire register is written
 
 
-    endfunction : build
+endfunction : build
 
 ```
 
 At this point, you may have noticed that the process is repetitive and boooring. We are enginneers, and we are programmers. Everything that is repetitive and boring we can transform into code to automatize. Let's automatize the configure write with a little script in julia language.
 
-```julia:./register_auto.jl
-current_health = ["current_health", "this", "6", "4", "RW", "0", "0", "1", "1", "1"]
-is_dead = ["is_dead", "this", "1", "3", "RO", "1", "0", "1", "1", "1"]
-initiative = ["initiative", "this", "3", "0", "RO", "1", "0", "1", "1", "1"]
+```julia:./register.jl
+max_health = ["max_health", "this", "4", "4", "WO", "0", "4'hf", "1", "1", "0"]
+current_health = ["current_health", "this", "4", "0", "WO", "0", "0", "1", "1", "0"]
 
-player = [current_health, is_dead, initiative]
+life = [max_health, current_health]
 
-for field in player
-    println("```cpp")
+for field in life
+    println("```verilog")
     println("$(field[1]).configure(")
     println("   .parent($(field[2])),")
     println("   .size($(field[3])),")
@@ -148,12 +149,14 @@ for field in player
 end
 ```
 
-\textoutput{./register_auto.jl}
+The output will be:
+
+\textoutput{./register.jl}
 
 
 Note that with these lines we just have to write the values of each field, run a loop and the program writes the file to us :D. The inputs can came from a csv file, by example, and all register can be written this way.
 
-Now, we have our first file. The **dnd\_player\_reg.sv**
+Now, we have our first file. The **cthulhu\_life\_reg.sv**
 
 ## Register Block
 
@@ -167,89 +170,81 @@ A Register block is a major module that will encapsulate the registers of a give
 
 Let's go step by step. First, let's instantiate all register and the memory map
 
-```cpp
-class dnd_reg_block extends uvm_reg_block;
-    `uvm_object_utils(dnd_reg_block)
+```verilog
+class cthulhu_reg_block extends uvm_reg_block;
+    `uvm_object_utils(cthulhu_reg_block)
+    
+    //***************************************
+    //* Register instantiation              *
+    //***************************************
+    
+    cthulhu_life_reg ct_life_reg;
+    cthulhu_sanity_reg ct_sanity_reg;
+    cthulhu_status_reg ct_status_reg;
 
-    // Instantiates register models
-    rand dnd_player_reg reg_player;
-    rand dnd_actions_reg reg_actions;
-    rand dnd_inventory_reg reg_inventory;
-
-    // Instantiates memory map
     uvm_reg_map reg_map;
 
     ...
-
 ```
 
 Now, the next steps will be creating the constructor and then building the registers. It is very simple to do this:
 
-```cpp
+```verilog
 
-    // Constructor
-    function new(string name="dnd_reg_block");
-        super.new(.name(name), .has_coverage(UVM_NO_COVERAGE));
-    endfunction : new
+virtual function void build();
+    
+    // Creation, build and configuration
+    ct_life_reg = cthulhu_life_reg::type_id::create("ct_life_reg");
+    ct_life_reg.build();
+    ct_life_reg.configure(this);
 
-    // Build function
-    virtual function void build();
-
-        // Define, configure and build. Repeat to every register
-        reg_player = dnd_player_reg::type_id::create("reg_player");
-        reg_player.configure(.blk_parent(this));
-        reg_player.build();
-
-        reg_actions = dnd_actions_reg::type_id::create("reg_actions");
-        reg_actions.configure(.blk_parent(this));
-        reg_actions.build();
-
-        reg_inventory = dnd_inventory_reg::type_id::create("reg_inventory");
-        reg_inventory.configure(.blk_parent(this));
-        reg_inventory.build();
-
-        ...
-
-    endfunction : build
+    ct_sanity_reg = cthulhu_sanity_reg::type_id::create("ct_sanity_reg");
+    ct_sanity_reg.build();
+    ct_sanity_reg.configure(this);
+    
+    ct_status_reg = cthulhu_status_reg::type_id::create("ct_status_reg");
+    ct_status_reg.build();
+    ct_status_reg.configure(this);
 
 ```
 
 We are almost finishing the Register modeling part of RAL. The last thing we must do is build the memory map. We will use the function `create_map()` to create the memory map. Then,
-we will use the function `add_reg()` to add each register.
+we will use the function `add_reg()` to add each register. Then, the `lock_model()` will finish the map addressing.
 
 
-```cpp
+```verilog
         
-        // Map creation
-        reg_map.create_map(
-            .name("reg_map"), // Just the name bro
-            .base_addr(12'h100), // The base address of memory map '
-            .n_bytes(2), // The number of bytes of each register
-            .endian(UVM_LITTLE_ENDIAN) // Defines order of storage values in fields
-        );
+    // Map creation
+    reg_map.create_map(
+        .name("reg_map"), // Just the name bro
+        .base_addr(12'h100), // The base address of memory map '
+        .n_bytes(1), // The number of bytes of each register
+        .endian(UVM_LITTLE_ENDIAN) // Defines order of storage values in fields
+    );
 
-        // Adding Registers
-        reg_map.add_reg(
-            .rg(reg_player), //Register instance
-            .offset(8'h0), //Address offset '
-            .rights("RW") //Access Policy
-        );
+    // Adding Registers
+    reg_map.add_reg(
+        .rg(ct_life_reg), //Register instance
+        .offset('h000),   //Address offset '
+        .rights("WO")     //Access Policy
+    );
 
-        reg_map.add_reg(
-            .rg(reg_actions),
-            .offset(8'h2),
-            .rights("RW")
-        );
+    reg_map.add_reg(
+        .rg(ct_sanity_reg),
+        .offset('h100),
+        .rights("WO")
+    );
 
-        reg_map.add_reg(
-            .rg(reg_inventory), 
-            .offset(8'h4), 
-            .rights("RW")
-        );
+    reg_map.add_reg(
+        .rg(ct_status_reg), 
+        .offset('h200), 
+        .rights("RO")
+    );
 
-    endfunction : build
+    lock_model();
 
-endclass : dnd_reg_block
+endfunction : build
+
 
 ```
 And now, we have our first component written, the UVM diagram now is:

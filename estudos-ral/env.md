@@ -14,42 +14,38 @@ There are three thing we must do to implement the predictor in environment:
 
 
 ```cpp
-typedef uvm_reg_predictor#(dnd_transaction) dnd_reg_predictor
+typedef uvm_reg_predictor#(cthulhu_transaction) cthulhu_reg_predictor;
 
-class dnd_environment extends uvm_env;
-	`uvm_component_utils(dnd_environment)
+class cthulhu_environment extends uvm_env;
+	`uvm_component_utils(cthulhu_environment)
+  
+	cthulhu_agent		cthulhu_agnt;
+	// Instantiates predictor
+	cthulhu_reg_predictor	cthulhu_pred;
+	
 
-	dnd_agent dnd_agt;
-
-	//Instantiate
-	dnd_reg_predictor dnd_pred;
-
-	function new(string name="dnd_environment");
-		super.new(.name(name));
+	function new(string name, uvm_component parent);
+		super.new(name, parent);
 	endfunction : new
 
-	virtual function void build_phase(uvm_phase phase);
+
+	function void build_phase(uvm_phase phase);
 		super.build_phase(phase);
-
-		dnd_agt = dnd_agent::type_id::create("dnd_agt", this);
-
-		// Build
-		dnd_pred = dnd_reg_predictor::type_id::create("dnd_pred", this);
+		cthulhu_agnt = cthulhu_agent::type_id::create("cthulhu_agnt", this);
+		// Build predictor
+		cthulhu_pred = cthulhu_reg_predictor::type_id::create("cthulhu_pred", this);
+		
 	endfunction : build_phase
+	
 
+	function void connect_phase(uvm_phase phase);
+		// Connect predictor adapter to agent adapter
+		cthulhu_pred.adapter = cthulhu_agnt.m_adapter;
+		// Connect predictor to monitor
+		cthulhu_agnt.cthulhu_ap.connect(cthulhu_pred.bus_in);
+	endfunction : connect_phase
 
-	virtual function void connect_phase(uvm_phase phase);
-		super.connect_phase(phase);
-
-		// Connect adapter
-		dnd_pred.adapter = dnd_agt.dnd_adapter;
-
-		// connect analysis port from agent(monitor transaction) to predictor
-		dnd_agt.dnd_ap.connect(dnd_pred.bus_in);
-
-	endfunction : connect_phase 
-
-endclass : dnd_environment
+endclass : cthulhu_environment
 
 ```
 

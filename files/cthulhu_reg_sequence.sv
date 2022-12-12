@@ -17,7 +17,7 @@ class cthulhu_reg_sequence extends uvm_sequence;
 		bit [7:0]      data_r;
 		
 		if (starting_phase != null)
-		starting_phase.raise_objection(this);
+			starting_phase.raise_objection(this);
 		
 		//Write to the Registers
 		regmodel.ct_sanity_reg.write(status, 8'F5);

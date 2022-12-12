@@ -15,25 +15,24 @@ This is very simple, the agent with only these two elements:
 
 ```cpp
 	
-class dnd_agent extends uvm_agent;
-	`uvm_component_utils(dnd_agent)
+class cthulhu_agent extends uvm_agent;
+	`uvm_component_utils(cthulhu_agent)
 
-	dnd_reg_adapter dnd_adapter;
+	cthulhu_adapter     m_adapter;
 
-
-	function new(string name="dnd_agent");
-		super.new(.name(name))
+	function new(string name, uvm_component parent);
+		super.new(name, parent);
 	endfunction : new
 
 	virtual function void build_phase(uvm_phase phase);
 		super.build_phase(phase);
 
-		dnd_adapter = dnd_reg_adapter.type_id::create("dnd_adapter");
+		m_adapter = cthulhu_adapter.type_id::create("m_adapter");
 
 	endfunction : build_phase
 
 ```
 
-We can see that it is the same proccess to insert any component in agent. The complete code of agent is located in **Source Code** page. Now, the ambient is something like this:
+We can see that it is the same proccess to insert any component in agent. The complete code of agent is located in [Source Code](/source_code/) page. Now, the ambient is something like this:
 
 ![UVM environment](/assets/some_percent_diagram_03.png)

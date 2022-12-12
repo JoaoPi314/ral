@@ -1,9 +1,9 @@
 class cthulhu_life_reg extends uvm_reg;
 	`uvm_object_utils(cthulhu_life_reg)
    
-	//---------------------------------------
-	// fields instance 
-	//--------------------------------------- 
+	//***************************************
+	//* Field instantiation                 *
+	//***************************************
 	rand uvm_reg_field current_health;
 	rand uvm_reg_field max_health;
 	
@@ -13,14 +13,12 @@ class cthulhu_life_reg extends uvm_reg;
 		super.new(.name(name), .n_bits(8), .has_coverage(UVM_NO_COVERAGE));
 	endfunction
 
-	//---------------------------------------
-	// At build_phase - TODO list:
-	//    1. Create the fields
-	//    2. Configure the fields
-	//---------------------------------------  
 	virtual function void build(); 
 		
+		// Creation of the field
 		max_health = uvm_reg_field::type_id::create("max_health");   
+
+		// Configuration of the field
 		max_health.configure(.parent(this), 
 						.size(4), 
 						.lsb_pos(4), 
