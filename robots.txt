@@ -1,4 +1,4 @@
-Sitemap: https://tlienart.github.io/FranklinTemplates.jl/sitemap.xml
+Sitemap: https://joaopi314.github.io/ral-hands-on/sitemap.xml
 
 User-agent: *
 Disallow:
