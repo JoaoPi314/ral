@@ -1,0 +1,26 @@
+```verilog
+max_health.configure(
+   .parent(this),
+   .size(4),
+   .lsb_pos(4),
+   .access(WO),
+   .volatile(0),
+   .reset(4'hf),
+   .has_reset(1),
+   .is_rand(1),
+   .individually_accessible(0)
+);
+```
+```verilog
+current_health.configure(
+   .parent(this),
+   .size(4),
+   .lsb_pos(0),
+   .access(WO),
+   .volatile(0),
+   .reset(0),
+   .has_reset(1),
+   .is_rand(1),
+   .individually_accessible(0)
+);
+```

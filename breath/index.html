@@ -1,0 +1,127 @@
+<!doctype html> <html lang=en > <meta charset=UTF-8 > <meta name=viewport  content="width=device-width, initial-scale=1"> <link rel=stylesheet  href="/ral/libs/highlight/styles/github.min.css"> <link rel=stylesheet  href="/ral/css/franklin.css"> <link rel=stylesheet  href="/ral/css/pure.css"> <link rel=stylesheet  href="/ral/css/side-menu.css"> <style> .franklin-content{padding-left:10%;} @media (min-width: 940px) { .franklin-content {width: 900px; margin-left: 0px; padding-left: 80px;} .header{width: 900px; margin-left: 0px; padding-left: 80px;} } </style> <link rel=icon  href="/ral/assets/favicon.png"> <title>A little breath</title> <div id=layout > <a href="#menu" id=menuLink  class=menu-link ><span></span></a> <div id=menu > <div class=pure-menu > <a class=pure-menu-heading  href="#">RAL</a> <ul class=pure-menu-list > <li class="pure-menu-item "><a href="/ral/" class=pure-menu-link >Introduction</a> <li class="pure-menu-item "><a href="/ral/register_block/" class=pure-menu-link >Register Blocks</a> <li class="pure-menu-item "><a href="/ral/adapter/" class=pure-menu-link >Adapter</a> <li class="pure-menu-item "><a href="/ral/agent/" class=pure-menu-link >The Agent</a> <li class="pure-menu-item "><a href="/ral/predictor/" class=pure-menu-link >Predictor</a> <li class="pure-menu-item "><a href="/ral/env/" class=pure-menu-link >The Env</a> <li class="pure-menu-item pure-menu-selected"><a href="/ral/breath/" class=pure-menu-link >Take a breath</a> <li class="pure-menu-item "><a href="/ral/reg_sequence/" class=pure-menu-link >Reg Sequence</a> <li class="pure-menu-item "><a href="/ral/test_file/" class=pure-menu-link >The Test</a> <li class="pure-menu-item "><a href="/ral/results/" class=pure-menu-link >Results</a> <li class="pure-menu-item "><a href="/ral/source_code/" class=pure-menu-link >Source Code</a> </ul> </div> </div> <div id=main > <div class=header > <h1>A little breath</h1> <h2>Hands-on to implement a simple UVM ambient with RAL</h2> </div> <div class=franklin-content > <div class=franklin-toc ><ol><li><a href="#the_interface">The Interface</a><li><a href="#the_dut">The DUT</a><li><a href="#the_driver_and_monitor">The Driver and monitor</a><li><a href="#transaction">Transaction</a></ol></div> <h1 id=the_missing_inner_components ><a href="#the_missing_inner_components" class=header-anchor >The missing inner components</a></h1> <p>Let&#39;s take a breath with all the new RAL stuff to see something that we already know:</p> <ul> <li><p>Interface</p> <li><p>DUT</p> <li><p>Monitor</p> <li><p>Driver</p> <li><p>Transaction</p> </ul> <p>This entire page can be skipped and the full code can be obtained at <strong>Source Code</strong> page if your only goal is to learn the RAL components. But I think it is important to know at least the interface and transaction, once the RAL commmunicates with this last one.</p> <h2 id=the_interface ><a href="#the_interface" class=header-anchor >The Interface</a></h2> <p>The interface is very simple. The block diagram is shown below:</p> <p><img src="/ral/assets/interface.png" alt="Interface diagram" /></p> <p>The functionality is very intuitive. If <code>valid &#61; 1&#39;b1</code>:</p> <ul> <li><p>If the <code>write_en</code> rises, then the <code>addr</code> and <code>data_w</code> must be passed together.</p> <li><p>If the <code>write_en</code> is at low level, the output <code>data_r</code> will send the reading from the addr passed by <code>addr</code>.</p> </ul> <p>The interface will have two clocking blocks, one to driver and another to monitor. It will also have two modports, a master and slave.</p> <pre><code class="verilog hljs"><span class=hljs-keyword >interface</span> cthulhu_interface(<span class=hljs-keyword >input</span> <span class=hljs-keyword >logic</span> clk,rst_n);
+  
+  <span class=hljs-keyword >logic</span> [<span class=hljs-number >11</span>:<span class=hljs-number >0</span>] addr;
+  <span class=hljs-keyword >logic</span>        write_en;
+  <span class=hljs-keyword >logic</span>        valid;
+  <span class=hljs-keyword >logic</span> [<span class=hljs-number >7</span>:<span class=hljs-number >0</span>]  data_w;
+  <span class=hljs-keyword >logic</span> [<span class=hljs-number >7</span>:<span class=hljs-number >0</span>]  data_r;
+  
+  <span class=hljs-keyword >clocking</span> driver_cb @(<span class=hljs-keyword >posedge</span> clk);
+    <span class=hljs-keyword >default</span> <span class=hljs-keyword >input</span> #<span class=hljs-number >1</span> <span class=hljs-keyword >output</span> #<span class=hljs-number >1</span>;
+    <span class=hljs-keyword >output</span> addr;
+    <span class=hljs-keyword >output</span> write_en;
+    <span class=hljs-keyword >output</span> valid;
+    <span class=hljs-keyword >output</span> data_w;
+    <span class=hljs-keyword >input</span>  data_r;  
+  <span class=hljs-keyword >endclocking</span>
+  
+
+  <span class=hljs-keyword >clocking</span> monitor_cb @(<span class=hljs-keyword >posedge</span> clk);
+    <span class=hljs-keyword >default</span> <span class=hljs-keyword >input</span> #<span class=hljs-number >1</span> <span class=hljs-keyword >output</span> #<span class=hljs-number >1</span>;
+    <span class=hljs-keyword >input</span> addr;
+    <span class=hljs-keyword >input</span> write_en;
+    <span class=hljs-keyword >input</span> valid;
+    <span class=hljs-keyword >input</span> data_w;
+    <span class=hljs-keyword >input</span> data_r;  
+  <span class=hljs-keyword >endclocking</span>
+  
+
+  <span class=hljs-keyword >modport</span> DRIVER  (<span class=hljs-keyword >clocking</span> driver_cb,<span class=hljs-keyword >input</span> clk,rst_n);
+  <span class=hljs-keyword >modport</span> MONITOR (<span class=hljs-keyword >clocking</span> monitor_cb,<span class=hljs-keyword >input</span> clk,rst_n);
+  
+<span class=hljs-keyword >endinterface</span> : cthulhu_interface</code></pre> <h2 id=the_dut ><a href="#the_dut" class=header-anchor >The DUT</a></h2> <p>Okay, I&#39;m not a Designer, I&#39;m a Verifier, so ignore any bad practice in this implementation. The DUT will consist in basically two <code>always_ff</code>, the first will write/read from registers. The second will update the Read-only values given some conditions explained at <a href="/ral/register_block/">Register Block</a> page. So, the code will be like:</p> <pre><code class="verilog hljs"><span class=hljs-keyword >module</span> cthulhu_manager(
+    <span class=hljs-keyword >input</span>         clk,
+    <span class=hljs-keyword >input</span>         rst_n,
+    <span class=hljs-keyword >input</span>  [<span class=hljs-number >11</span>:<span class=hljs-number >0</span>] addr,
+    <span class=hljs-keyword >input</span>         write_en,
+    <span class=hljs-keyword >input</span>         valid,
+    <span class=hljs-keyword >input</span>  [<span class=hljs-number >7</span>:<span class=hljs-number >0</span>]  data_w,
+    <span class=hljs-keyword >output</span> [<span class=hljs-number >7</span>:<span class=hljs-number >0</span>]  data_r
+);
+
+    life_st life; 
+    sanity_st sanity;
+    status_st status;
+	
+  	<span class=hljs-keyword >logic</span> [<span class=hljs-number >7</span>:<span class=hljs-number >0</span>] t_data;
+  
+  	
+    <span class=hljs-keyword >assign</span> data_r = t_data;
+    
+  
+    <span class=hljs-keyword >always_ff</span>@(<span class=hljs-keyword >posedge</span> clk, <span class=hljs-keyword >negedge</span> rst_n) <span class=hljs-keyword >begin</span>
+        <span class=hljs-keyword >if</span>(~rst_n) <span class=hljs-keyword >begin</span>
+            life   &lt;= <span class=hljs-number >0</span>;
+            sanity &lt;= <span class=hljs-number >0</span>;
+        <span class=hljs-keyword >end</span>
+        <span class=hljs-keyword >else</span> <span class=hljs-keyword >if</span>(write_en &amp; valid) <span class=hljs-keyword >begin</span>
+            <span class=hljs-keyword >case</span>(addr)
+                <span class=hljs-number >12&#x27;h100</span>: life   &lt;= data_w;
+                <span class=hljs-number >12&#x27;h200</span>: sanity &lt;= data_w;
+                <span class=hljs-keyword >default</span>: life   &lt;= data_w;
+            <span class=hljs-keyword >endcase</span>
+        <span class=hljs-keyword >end</span>
+      	<span class=hljs-keyword >else</span> <span class=hljs-keyword >if</span> (!write_en &amp; valid) <span class=hljs-keyword >begin</span>
+        	<span class=hljs-keyword >case</span>(addr)
+              <span class=hljs-number >12&#x27;h300</span>: t_data &lt;= status;
+              <span class=hljs-keyword >default</span>: t_data &lt;= <span class=hljs-number >8&#x27;b0</span>;
+            <span class=hljs-keyword >endcase</span>
+      	<span class=hljs-keyword >end</span>
+    <span class=hljs-keyword >end</span>
+
+    <span class=hljs-keyword >always_ff</span>@(<span class=hljs-keyword >posedge</span> clk, <span class=hljs-keyword >negedge</span> rst_n) <span class=hljs-keyword >begin</span>
+        <span class=hljs-keyword >if</span>(~rst_n) <span class=hljs-keyword >begin</span>
+            status &lt;= <span class=hljs-number >0</span>;
+        <span class=hljs-keyword >end</span>
+        <span class=hljs-keyword >else</span> <span class=hljs-keyword >begin</span>
+            <span class=hljs-keyword >if</span>(life<span class=hljs-variable >.current_health</span> == <span class=hljs-number >&#x27;h0</span>) <span class=hljs-keyword >begin</span>
+                status<span class=hljs-variable >.is_dead</span> &lt;= <span class=hljs-number >1&#x27;b1</span>;
+                status<span class=hljs-variable >.is_wounded</span> &lt;= <span class=hljs-number >1&#x27;b0</span>;
+                status<span class=hljs-variable >.is_healthy</span> &lt;= <span class=hljs-number >1&#x27;b0</span>;
+            <span class=hljs-keyword >end</span> <span class=hljs-keyword >else</span> <span class=hljs-keyword >if</span>(life<span class=hljs-variable >.current_health</span> &lt; life<span class=hljs-variable >.max_health</span>/<span class=hljs-number >2</span>) <span class=hljs-keyword >begin</span>
+                status<span class=hljs-variable >.is_dead</span> &lt;= <span class=hljs-number >1&#x27;b0</span>;
+                status<span class=hljs-variable >.is_wounded</span> &lt;= <span class=hljs-number >1&#x27;b1</span>;
+                status<span class=hljs-variable >.is_healthy</span> &lt;= <span class=hljs-number >1&#x27;b0</span>;
+            <span class=hljs-keyword >end</span> <span class=hljs-keyword >else</span> <span class=hljs-keyword >begin</span>
+                status<span class=hljs-variable >.is_dead</span> &lt;= <span class=hljs-number >1&#x27;b0</span>;
+                status<span class=hljs-variable >.is_wounded</span> &lt;= <span class=hljs-number >1&#x27;b0</span>;
+                status<span class=hljs-variable >.is_healthy</span> &lt;= <span class=hljs-number >1&#x27;b1</span>;
+            <span class=hljs-keyword >end</span>
+
+            <span class=hljs-keyword >if</span>(sanity<span class=hljs-variable >.current_sanity</span> == <span class=hljs-number >&#x27;h0</span>) <span class=hljs-keyword >begin</span>
+                status<span class=hljs-variable >.is_mad</span> &lt;= <span class=hljs-number >1&#x27;b1</span>;
+                status<span class=hljs-variable >.is_going_mad</span> &lt;= <span class=hljs-number >1&#x27;b0</span>;
+                status<span class=hljs-variable >.is_sane</span> &lt;= <span class=hljs-number >1&#x27;b0</span>;
+            <span class=hljs-keyword >end</span> <span class=hljs-keyword >else</span> <span class=hljs-keyword >if</span>(sanity<span class=hljs-variable >.current_sanity</span> &lt;= sanity<span class=hljs-variable >.max_sanity</span>/<span class=hljs-number >2</span>) <span class=hljs-keyword >begin</span>
+                status<span class=hljs-variable >.is_mad</span> &lt;= <span class=hljs-number >1&#x27;b0</span>;
+                status<span class=hljs-variable >.is_going_mad</span> &lt;= <span class=hljs-number >1&#x27;b1</span>;
+                status<span class=hljs-variable >.is_sane</span> &lt;= <span class=hljs-number >1&#x27;b0</span>;
+            <span class=hljs-keyword >end</span> <span class=hljs-keyword >else</span> <span class=hljs-keyword >begin</span>
+                status<span class=hljs-variable >.is_mad</span> &lt;= <span class=hljs-number >1&#x27;b0</span>;
+                status<span class=hljs-variable >.is_going_mad</span> &lt;= <span class=hljs-number >1&#x27;b0</span>;
+                status<span class=hljs-variable >.is_sane</span> &lt;= <span class=hljs-number >1&#x27;b1</span>;
+            <span class=hljs-keyword >end</span>
+
+        <span class=hljs-keyword >end</span>
+    <span class=hljs-keyword >end</span>
+
+
+<span class=hljs-keyword >endmodule</span> : cthulhu_manager</code></pre> <h2 id=the_driver_and_monitor ><a href="#the_driver_and_monitor" class=header-anchor >The Driver and monitor</a></h2> <p>There is no big deal with Driver and monitor. The complete code will be available at <a href="/ral/source_code/">Source Code</a>.</p> <h2 id=transaction ><a href="#transaction" class=header-anchor >Transaction</a></h2> <p>The transaction also is very simple:</p> <pre><code class="verilog hljs"><span class=hljs-keyword >class</span> cthulhu_transaction <span class=hljs-keyword >extends</span> uvm_sequence_item;
+
+    <span class=hljs-keyword >rand</span> <span class=hljs-keyword >bit</span> [<span class=hljs-number >11</span>:<span class=hljs-number >0</span>] addr;
+    <span class=hljs-keyword >rand</span> <span class=hljs-keyword >bit</span>        write_en;
+    <span class=hljs-keyword >rand</span> <span class=hljs-keyword >bit</span> [<span class=hljs-number >7</span>:<span class=hljs-number >0</span>]  data_w;
+    <span class=hljs-keyword >rand</span> <span class=hljs-keyword >bit</span> [<span class=hljs-number >7</span>:<span class=hljs-number >0</span>]  data_r;
+    
+
+    `uvm_object_utils_begin(cthulhu_transaction)
+        `uvm_field_int(addr,UVM_ALL_ON)
+        `uvm_field_int(write_en,UVM_ALL_ON)
+        `uvm_field_int(data_w,UVM_ALL_ON)
+    `uvm_object_utils_end
+
+    <span class=hljs-keyword >function</span> <span class=hljs-keyword >new</span>(<span class=hljs-keyword >string</span> name = <span class=hljs-string >&quot;cthulhu_transaction&quot;</span>);
+        <span class=hljs-keyword >super</span><span class=hljs-variable >.new</span>(name);
+    <span class=hljs-keyword >endfunction</span>
+    
+<span class=hljs-keyword >endclass</span></code></pre> <p>Now, our diagram is more colored:</p> <p><img src="/ral/assets/some_percent_diagram_05.png" alt="UVM diagram" /></p> <div class=page-foot > <a href="http://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> João Pedro Melquiades Gomes. Last modified: December 13, 2022. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a> and the <a href="https://julialang.org">Julia programming language</a>. </div> </div> </div> </div> <script src="/ral/libs/pure/ui.min.js"></script> <script src="/ral/libs/highlight/highlight.min.js"></script> <script>hljs.highlightAll();hljs.configure({tabReplace: ' '});</script>

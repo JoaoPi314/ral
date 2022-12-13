@@ -1,0 +1,714 @@
+<!doctype html> <html lang=en > <meta charset=UTF-8 > <meta name=viewport  content="width=device-width, initial-scale=1"> <link rel=stylesheet  href="/ral/libs/highlight/styles/github.min.css"> <link rel=stylesheet  href="/ral/css/franklin.css"> <link rel=stylesheet  href="/ral/css/pure.css"> <link rel=stylesheet  href="/ral/css/side-menu.css"> <style> .franklin-content{padding-left:10%;} @media (min-width: 940px) { .franklin-content {width: 900px; margin-left: 0px; padding-left: 80px;} .header{width: 900px; margin-left: 0px; padding-left: 80px;} } </style> <link rel=icon  href="/ral/assets/favicon.png"> <title>Source Code</title> <div id=layout > <a href="#menu" id=menuLink  class=menu-link ><span></span></a> <div id=menu > <div class=pure-menu > <a class=pure-menu-heading  href="#">RAL</a> <ul class=pure-menu-list > <li class="pure-menu-item "><a href="/ral/" class=pure-menu-link >Introduction</a> <li class="pure-menu-item "><a href="/ral/register_block/" class=pure-menu-link >Register Blocks</a> <li class="pure-menu-item "><a href="/ral/adapter/" class=pure-menu-link >Adapter</a> <li class="pure-menu-item "><a href="/ral/agent/" class=pure-menu-link >The Agent</a> <li class="pure-menu-item "><a href="/ral/predictor/" class=pure-menu-link >Predictor</a> <li class="pure-menu-item "><a href="/ral/env/" class=pure-menu-link >The Env</a> <li class="pure-menu-item "><a href="/ral/breath/" class=pure-menu-link >Take a breath</a> <li class="pure-menu-item "><a href="/ral/reg_sequence/" class=pure-menu-link >Reg Sequence</a> <li class="pure-menu-item "><a href="/ral/test_file/" class=pure-menu-link >The Test</a> <li class="pure-menu-item "><a href="/ral/results/" class=pure-menu-link >Results</a> <li class="pure-menu-item pure-menu-selected"><a href="/ral/source_code/" class=pure-menu-link >Source Code</a> </ul> </div> </div> <div id=main > <div class=header > <h1>Source Code</h1> <h2>Hands-on to implement a simple UVM ambient with RAL</h2> </div> <div class=franklin-content > <h1 id=source_code ><a href="#source_code" class=header-anchor >Source Code</a></h1> <div class=franklin-toc ><ol><li><a href="#cthulhuliferegsv">cthulhu&#95;life&#95;reg.sv</a><li><a href="#cthulhusanityregsv">cthulhu&#95;sanity&#95;reg.sv</a><li><a href="#cthulhustatus_regsv">cthulhu&#95;status_&#95;reg.sv</a><li><a href="#cthulhuregblocksv">cthulhu&#95;reg&#95;block.sv</a><li><a href="#cthulhuadaptersv">cthulhu&#95;adapter.sv</a><li><a href="#cthulhuagentsv">cthulhu&#95;agent.sv</a><li><a href="#cthulhuenvironmentsv">cthulhu&#95;environment.sv</a><li><a href="#cthulhu_interfacesv">cthulhu_interface.sv</a><li><a href="#cthulhu_transactionsv">cthulhu_transaction.sv</a><li><a href="#cthulhudriversv">cthulhu&#95;driver.sv</a><li><a href="#cthulhumonitorsv">cthulhu&#95;monitor.sv</a><li><a href="#cthulhumanagersv">cthulhu&#95;manager.sv</a><li><a href="#cthulhuregsequencesv">cthulhu&#95;reg&#95;sequence.sv</a><li><a href="#cthulhubasetestsv">cthulhu&#95;base&#95;test.sv</a><li><a href="#cthulhuregtestsv">cthulhu&#95;reg&#95;test.sv</a><li><a href="#testbenchsv">testbench.sv</a></ol></div> <h2 id=cthulhuliferegsv ><a href="#cthulhuliferegsv" class=header-anchor >cthulhu&#95;life&#95;reg.sv</a></h2> <pre><code class="verilog hljs"><span class=hljs-keyword >class</span> cthulhu_life_reg <span class=hljs-keyword >extends</span> uvm_reg;
+	`uvm_object_utils(cthulhu_life_reg)
+   
+	<span class=hljs-comment >//***************************************</span>
+	<span class=hljs-comment >//* Field instantiation                 *</span>
+	<span class=hljs-comment >//***************************************</span>
+	<span class=hljs-keyword >rand</span> uvm_reg_field current_health;
+	<span class=hljs-keyword >rand</span> uvm_reg_field max_health;
+	
+
+	
+	<span class=hljs-keyword >function</span> <span class=hljs-keyword >new</span> (<span class=hljs-keyword >string</span> name = <span class=hljs-string >&quot;cthulhu_life_reg&quot;</span>);
+		<span class=hljs-keyword >super</span><span class=hljs-variable >.new</span>(<span class=hljs-variable >.name</span>(name), <span class=hljs-variable >.n_bits</span>(<span class=hljs-number >8</span>), <span class=hljs-variable >.has_coverage</span>(UVM_NO_COVERAGE));
+	<span class=hljs-keyword >endfunction</span>
+
+	<span class=hljs-keyword >virtual</span> <span class=hljs-keyword >function</span> <span class=hljs-keyword >void</span> build(); 
+		
+		<span class=hljs-comment >// Creation of the field</span>
+		max_health = uvm_reg_field::type_id::create(<span class=hljs-string >&quot;max_health&quot;</span>);   
+
+		<span class=hljs-comment >// Configuration of the field</span>
+		max_health<span class=hljs-variable >.configure</span>(<span class=hljs-variable >.parent</span>(<span class=hljs-keyword >this</span>), 
+						<span class=hljs-variable >.size</span>(<span class=hljs-number >4</span>), 
+						<span class=hljs-variable >.lsb_pos</span>(<span class=hljs-number >4</span>), 
+						<span class=hljs-variable >.access</span>(<span class=hljs-string >&quot;WO&quot;</span>),  
+						<span class=hljs-variable >.volatile</span>(<span class=hljs-number >0</span>), 
+						<span class=hljs-variable >.reset</span>(<span class=hljs-number >4&#x27;hf</span>), 
+						<span class=hljs-variable >.has_reset</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.is_rand</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.individually_accessible</span>(<span class=hljs-number >0</span>)); 
+
+	
+		current_health = uvm_reg_field::type_id::create(<span class=hljs-string >&quot;current_health&quot;</span>);   
+		current_health<span class=hljs-variable >.configure</span>(<span class=hljs-variable >.parent</span>(<span class=hljs-keyword >this</span>), 
+						<span class=hljs-variable >.size</span>(<span class=hljs-number >4</span>), 
+						<span class=hljs-variable >.lsb_pos</span>(<span class=hljs-number >0</span>), 
+						<span class=hljs-variable >.access</span>(<span class=hljs-string >&quot;WO&quot;</span>),  
+						<span class=hljs-variable >.volatile</span>(<span class=hljs-number >0</span>), 
+						<span class=hljs-variable >.reset</span>(<span class=hljs-number >0</span>), 
+						<span class=hljs-variable >.has_reset</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.is_rand</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.individually_accessible</span>(<span class=hljs-number >0</span>)); 
+	<span class=hljs-keyword >endfunction</span> : build
+<span class=hljs-keyword >endclass</span> : cthulhu_life_reg</code></pre> <h2 id=cthulhusanityregsv ><a href="#cthulhusanityregsv" class=header-anchor >cthulhu&#95;sanity&#95;reg.sv</a></h2> <pre><code class="verilog hljs"><span class=hljs-keyword >class</span> cthulhu_sanity_reg <span class=hljs-keyword >extends</span> uvm_reg;
+	`uvm_object_utils(cthulhu_sanity_reg)
+   
+	<span class=hljs-comment >//***************************************</span>
+	<span class=hljs-comment >//* Field instantiation                 *</span>
+	<span class=hljs-comment >//***************************************</span>
+	<span class=hljs-keyword >rand</span> uvm_reg_field current_sanity;
+	<span class=hljs-keyword >rand</span> uvm_reg_field max_sanity;
+	
+
+	
+	<span class=hljs-keyword >function</span> <span class=hljs-keyword >new</span> (<span class=hljs-keyword >string</span> name = <span class=hljs-string >&quot;cthulhu_sanity_reg&quot;</span>);
+		<span class=hljs-keyword >super</span><span class=hljs-variable >.new</span>(<span class=hljs-variable >.name</span>(name), <span class=hljs-variable >.n_bits</span>(<span class=hljs-number >8</span>), <span class=hljs-variable >.has_covergae</span>(UVM_NO_COVERAGE));
+	<span class=hljs-keyword >endfunction</span>
+
+	
+	<span class=hljs-keyword >function</span> <span class=hljs-keyword >void</span> build; 
+		
+		max_sanity = uvm_reg_field::type_id::create(<span class=hljs-string >&quot;max_sanity&quot;</span>);   
+		max_sanity<span class=hljs-variable >.configure</span>(<span class=hljs-variable >.parent</span>(<span class=hljs-keyword >this</span>), 
+						<span class=hljs-variable >.size</span>(<span class=hljs-number >4</span>), 
+						<span class=hljs-variable >.lsb_pos</span>(<span class=hljs-number >4</span>), 
+						<span class=hljs-variable >.access</span>(<span class=hljs-string >&quot;WO&quot;</span>),  
+						<span class=hljs-variable >.volatile</span>(<span class=hljs-number >0</span>), 
+						<span class=hljs-variable >.reset</span>(<span class=hljs-number >4&#x27;hf</span>), 
+						<span class=hljs-variable >.has_reset</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.is_rand</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.individually_accessible</span>(<span class=hljs-number >0</span>)); 
+
+	
+		current_sanity = uvm_reg_field::type_id::create(<span class=hljs-string >&quot;current_sanity&quot;</span>);   
+		current_sanity<span class=hljs-variable >.configure</span>(<span class=hljs-variable >.parent</span>(<span class=hljs-keyword >this</span>), 
+						<span class=hljs-variable >.size</span>(<span class=hljs-number >4</span>), 
+						<span class=hljs-variable >.lsb_pos</span>(<span class=hljs-number >0</span>), 
+						<span class=hljs-variable >.access</span>(<span class=hljs-string >&quot;WO&quot;</span>),  
+						<span class=hljs-variable >.volatile</span>(<span class=hljs-number >0</span>), 
+						<span class=hljs-variable >.reset</span>(<span class=hljs-number >0</span>), 
+						<span class=hljs-variable >.has_reset</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.is_rand</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.individually_accessible</span>(<span class=hljs-number >0</span>)); 
+    <span class=hljs-keyword >endfunction</span> : build
+<span class=hljs-keyword >endclass</span> : cthulhu_sanity_reg</code></pre> <h2 id=cthulhustatus_regsv ><a href="#cthulhustatus_regsv" class=header-anchor >cthulhu&#95;status_&#95;reg.sv</a></h2> <pre><code class="verilog hljs"><span class=hljs-keyword >class</span> cthulhu_status_reg <span class=hljs-keyword >extends</span> uvm_reg;
+	`uvm_object_utils(cthulhu_status_reg)
+   
+	<span class=hljs-comment >//***************************************</span>
+	<span class=hljs-comment >//* Field instantiation                 *</span>
+	<span class=hljs-comment >//***************************************</span>
+	<span class=hljs-keyword >rand</span> uvm_reg_field is_dead;
+	<span class=hljs-keyword >rand</span> uvm_reg_field is_wounded;
+    <span class=hljs-keyword >rand</span> uvm_reg_field is_healthy;
+    <span class=hljs-keyword >rand</span> uvm_reg_field is_mad;
+    <span class=hljs-keyword >rand</span> uvm_reg_field is_going_mad;
+    <span class=hljs-keyword >rand</span> uvm_reg_field is_sane;
+    <span class=hljs-keyword >rand</span> uvm_reg_field reserved;
+
+	
+	<span class=hljs-keyword >function</span> <span class=hljs-keyword >new</span> (<span class=hljs-keyword >string</span> name = <span class=hljs-string >&quot;cthulhu_status_reg&quot;</span>);
+		<span class=hljs-keyword >super</span><span class=hljs-variable >.new</span>(<span class=hljs-variable >.name</span>(name), <span class=hljs-variable >.n_bits</span>(<span class=hljs-number >8</span>), <span class=hljs-variable >.has_coverage</span>(UVM_NO_COVERAGE));
+	<span class=hljs-keyword >endfunction</span>
+
+
+	<span class=hljs-keyword >function</span> <span class=hljs-keyword >void</span> build; 
+		
+		is_dead = uvm_reg_field::type_id::create(<span class=hljs-string >&quot;is_dead&quot;</span>);   
+		is_dead<span class=hljs-variable >.configure</span>(<span class=hljs-variable >.parent</span>(<span class=hljs-keyword >this</span>), 
+						<span class=hljs-variable >.size</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.lsb_pos</span>(<span class=hljs-number >0</span>), 
+						<span class=hljs-variable >.access</span>(<span class=hljs-string >&quot;RO&quot;</span>),  
+						<span class=hljs-variable >.volatile</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.reset</span>(<span class=hljs-number >0</span>), 
+						<span class=hljs-variable >.has_reset</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.is_rand</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.individually_accessible</span>(<span class=hljs-number >1</span>)); 
+
+	
+		is_wounded = uvm_reg_field::type_id::create(<span class=hljs-string >&quot;is_wounded&quot;</span>);   
+		is_wounded<span class=hljs-variable >.configure</span>(<span class=hljs-variable >.parent</span>(<span class=hljs-keyword >this</span>), 
+						<span class=hljs-variable >.size</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.lsb_pos</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.access</span>(<span class=hljs-string >&quot;RO&quot;</span>),  
+						<span class=hljs-variable >.volatile</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.reset</span>(<span class=hljs-number >0</span>), 
+						<span class=hljs-variable >.has_reset</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.is_rand</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.individually_accessible</span>(<span class=hljs-number >1</span>)); 
+
+
+		is_healthy = uvm_reg_field::type_id::create(<span class=hljs-string >&quot;is_healthy&quot;</span>);   
+		is_healthy<span class=hljs-variable >.configure</span>(<span class=hljs-variable >.parent</span>(<span class=hljs-keyword >this</span>), 
+						<span class=hljs-variable >.size</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.lsb_pos</span>(<span class=hljs-number >2</span>), 
+						<span class=hljs-variable >.access</span>(<span class=hljs-string >&quot;RO&quot;</span>),  
+						<span class=hljs-variable >.volatile</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.reset</span>(<span class=hljs-number >1&#x27;b1</span>), 
+						<span class=hljs-variable >.has_reset</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.is_rand</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.individually_accessible</span>(<span class=hljs-number >1</span>));
+
+		is_mad = uvm_reg_field::type_id::create(<span class=hljs-string >&quot;is_mad&quot;</span>);   
+		is_mad<span class=hljs-variable >.configure</span>(<span class=hljs-variable >.parent</span>(<span class=hljs-keyword >this</span>), 
+						<span class=hljs-variable >.size</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.lsb_pos</span>(<span class=hljs-number >3</span>), 
+						<span class=hljs-variable >.access</span>(<span class=hljs-string >&quot;RO&quot;</span>),  
+						<span class=hljs-variable >.volatile</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.reset</span>(<span class=hljs-number >0</span>), 
+						<span class=hljs-variable >.has_reset</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.is_rand</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.individually_accessible</span>(<span class=hljs-number >1</span>)); 
+
+	
+		is_going_mad = uvm_reg_field::type_id::create(<span class=hljs-string >&quot;is_going_mad&quot;</span>);   
+		is_going_mad<span class=hljs-variable >.configure</span>(<span class=hljs-variable >.parent</span>(<span class=hljs-keyword >this</span>), 
+						<span class=hljs-variable >.size</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.lsb_pos</span>(<span class=hljs-number >4</span>), 
+						<span class=hljs-variable >.access</span>(<span class=hljs-string >&quot;RO&quot;</span>),  
+						<span class=hljs-variable >.volatile</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.reset</span>(<span class=hljs-number >0</span>), 
+						<span class=hljs-variable >.has_reset</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.is_rand</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.individually_accessible</span>(<span class=hljs-number >1</span>)); 
+
+
+		is_sane = uvm_reg_field::type_id::create(<span class=hljs-string >&quot;is_sane&quot;</span>);   
+		is_sane<span class=hljs-variable >.configure</span>(<span class=hljs-variable >.parent</span>(<span class=hljs-keyword >this</span>), 
+						<span class=hljs-variable >.size</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.lsb_pos</span>(<span class=hljs-number >5</span>), 
+						<span class=hljs-variable >.access</span>(<span class=hljs-string >&quot;RO&quot;</span>),  
+						<span class=hljs-variable >.volatile</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.reset</span>(<span class=hljs-number >1&#x27;b1</span>), 
+						<span class=hljs-variable >.has_reset</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.is_rand</span>(<span class=hljs-number >1</span>), 
+						<span class=hljs-variable >.individually_accessible</span>(<span class=hljs-number >1</span>)); 
+    <span class=hljs-keyword >endfunction</span> : build
+<span class=hljs-keyword >endclass</span> : cthulhu_status_reg</code></pre> <h2 id=cthulhuregblocksv ><a href="#cthulhuregblocksv" class=header-anchor >cthulhu&#95;reg&#95;block.sv</a></h2> <pre><code class="verilog hljs"><span class=hljs-keyword >class</span> cthulhu_reg_block <span class=hljs-keyword >extends</span> uvm_reg_block;
+    `uvm_object_utils(cthulhu_reg_block)
+    
+    <span class=hljs-comment >//***************************************</span>
+    <span class=hljs-comment >//* Register instantiation              *</span>
+    <span class=hljs-comment >//***************************************</span>
+    
+    cthulhu_life_reg ct_life_reg;
+    cthulhu_sanity_reg ct_sanity_reg;
+    cthulhu_status_reg ct_status_reg;
+
+    uvm_reg_map reg_map;
+    
+   
+    <span class=hljs-keyword >function</span> <span class=hljs-keyword >new</span> (<span class=hljs-keyword >string</span> name = <span class=hljs-string >&quot;&quot;</span>);
+      <span class=hljs-keyword >super</span><span class=hljs-variable >.new</span>(<span class=hljs-variable >.name</span>(name), <span class=hljs-variable >.has_coverage</span>(UVM_NO_COVERAGE));
+    <span class=hljs-keyword >endfunction</span>
+  
+
+    <span class=hljs-keyword >virtual</span> <span class=hljs-keyword >function</span> <span class=hljs-keyword >void</span> build();
+      
+      <span class=hljs-comment >// Creation, build and configuration</span>
+      ct_life_reg = cthulhu_life_reg::type_id::create(<span class=hljs-string >&quot;ct_life_reg&quot;</span>);
+      ct_life_reg<span class=hljs-variable >.build</span>();
+      ct_life_reg<span class=hljs-variable >.configure</span>(<span class=hljs-keyword >this</span>);
+   
+      ct_sanity_reg = cthulhu_sanity_reg::type_id::create(<span class=hljs-string >&quot;ct_sanity_reg&quot;</span>);
+      ct_sanity_reg<span class=hljs-variable >.build</span>();
+      ct_sanity_reg<span class=hljs-variable >.configure</span>(<span class=hljs-keyword >this</span>);
+      
+      ct_status_reg = cthulhu_status_reg::type_id::create(<span class=hljs-string >&quot;ct_status_reg&quot;</span>);
+      ct_status_reg<span class=hljs-variable >.build</span>();
+      ct_status_reg<span class=hljs-variable >.configure</span>(<span class=hljs-keyword >this</span>);
+    
+
+      <span class=hljs-comment >// Map creation</span>
+      reg_map<span class=hljs-variable >.create_map</span>(
+          <span class=hljs-variable >.name</span>(<span class=hljs-string >&quot;reg_map&quot;</span>), <span class=hljs-comment >// Just the name bro</span>
+          <span class=hljs-variable >.base_addr</span>(<span class=hljs-number >12&#x27;h100</span>), <span class=hljs-comment >// The base address of memory map &#x27;</span>
+          <span class=hljs-variable >.n_bytes</span>(<span class=hljs-number >1</span>), <span class=hljs-comment >// The number of bytes of each register</span>
+          <span class=hljs-variable >.endian</span>(UVM_LITTLE_ENDIAN) <span class=hljs-comment >// Defines order of storage values in fields</span>
+      );
+
+      <span class=hljs-comment >// Adding Registers</span>
+      reg_map<span class=hljs-variable >.add_reg</span>(
+          <span class=hljs-variable >.rg</span>(ct_life_reg), <span class=hljs-comment >//Register instance</span>
+          <span class=hljs-variable >.offset</span>(<span class=hljs-number >&#x27;h000</span>),   <span class=hljs-comment >//Address offset &#x27;</span>
+          <span class=hljs-variable >.rights</span>(<span class=hljs-string >&quot;WO&quot;</span>)     <span class=hljs-comment >//Access Policy</span>
+      );
+
+      reg_map<span class=hljs-variable >.add_reg</span>(
+          <span class=hljs-variable >.rg</span>(ct_sanity_reg),
+          <span class=hljs-variable >.offset</span>(<span class=hljs-number >&#x27;h100</span>),
+          <span class=hljs-variable >.rights</span>(<span class=hljs-string >&quot;WO&quot;</span>)
+      );
+
+      reg_map<span class=hljs-variable >.add_reg</span>(
+          <span class=hljs-variable >.rg</span>(ct_status_reg), 
+          <span class=hljs-variable >.offset</span>(<span class=hljs-number >&#x27;h200</span>), 
+          <span class=hljs-variable >.rights</span>(<span class=hljs-string >&quot;RO&quot;</span>)
+      );
+
+    lock_model();
+    <span class=hljs-keyword >endfunction</span> : build
+  <span class=hljs-keyword >endclass</span> : cthulhu_reg_block</code></pre> <h2 id=cthulhuadaptersv ><a href="#cthulhuadaptersv" class=header-anchor >cthulhu&#95;adapter.sv</a></h2> <pre><code class="verilog hljs"><span class=hljs-keyword >class</span> cthulhu_adapter <span class=hljs-keyword >extends</span> uvm_reg_adapter;
+	`uvm_object_utils (cthulhu_adapter)
+
+	<span class=hljs-keyword >function</span> <span class=hljs-keyword >new</span>(<span class=hljs-keyword >string</span> name = <span class=hljs-string >&quot;cthulhu_adapter&quot;</span>);
+		<span class=hljs-keyword >super</span><span class=hljs-variable >.new</span>(name);
+	<span class=hljs-keyword >endfunction</span>
+
+	<span class=hljs-keyword >function</span> uvm_sequence_item reg2bus(<span class=hljs-keyword >const</span> <span class=hljs-keyword >ref</span> uvm_reg_bus_op rw);
+		cthulhu_transaction tx;    
+		tx = cthulhu_transaction::type_id::create(<span class=hljs-string >&quot;tx&quot;</span>);
+		
+		tx<span class=hljs-variable >.write_en</span> = (rw<span class=hljs-variable >.kind</span> == UVM_WRITE);
+		tx<span class=hljs-variable >.addr</span>  = rw<span class=hljs-variable >.addr</span>;
+		<span class=hljs-keyword >if</span> (tx<span class=hljs-variable >.write_en</span>)  tx<span class=hljs-variable >.data_w</span> = rw<span class=hljs-variable >.data</span>;
+		<span class=hljs-keyword >if</span> (!tx<span class=hljs-variable >.write_en</span>) tx<span class=hljs-variable >.data_r</span> = rw<span class=hljs-variable >.data</span>;
+
+		<span class=hljs-keyword >return</span> tx;
+	<span class=hljs-keyword >endfunction</span> : reg2bus
+
+	<span class=hljs-keyword >function</span> <span class=hljs-keyword >void</span> bus2reg(uvm_sequence_item bus_item, <span class=hljs-keyword >ref</span> uvm_reg_bus_op rw);
+		cthulhu_transaction tx;
+		
+		<span class=hljs-keyword >assert</span>( <span class=hljs-built_in >$cast</span>(tx, bus_item) )
+		<span class=hljs-keyword >else</span> `uvm_fatal(<span class=hljs-string >&quot;&quot;</span>, <span class=hljs-string >&quot;A bad thing has just happened in my_adapter&quot;</span>)
+
+		rw<span class=hljs-variable >.kind</span> = tx<span class=hljs-variable >.write_en</span> ? UVM_WRITE : UVM_READ;
+		rw<span class=hljs-variable >.addr</span> = tx<span class=hljs-variable >.addr</span>;
+		rw<span class=hljs-variable >.data</span> = tx<span class=hljs-variable >.data_r</span>;
+		
+		rw<span class=hljs-variable >.status</span> = UVM_IS_OK;
+	<span class=hljs-keyword >endfunction</span> : bus2reg
+<span class=hljs-keyword >endclass</span> : cthulhu_adapter</code></pre> <h2 id=cthulhuagentsv ><a href="#cthulhuagentsv" class=header-anchor >cthulhu&#95;agent.sv</a></h2> <pre><code class="verilog hljs"><span class=hljs-keyword >class</span> cthulhu_agent <span class=hljs-keyword >extends</span> uvm_agent;
+	`uvm_component_utils(cthulhu_agent)
+
+	<span class=hljs-keyword >typedef</span> uvm_sequencer<span class=hljs-variable >#(cthulhu_transaction)</span> cthulhu_sequencer;
+
+	cthulhu_driver      driver;
+	cthulhu_sequencer   sequencer;
+	cthulhu_monitor     monitor;
+	cthulhu_adapter     m_adapter;
+
+	uvm_analysis_port<span class=hljs-variable >#(cthulhu_transaction)</span> cthulhu_ap;
+
+	
+	<span class=hljs-keyword >function</span> <span class=hljs-keyword >new</span>(<span class=hljs-keyword >string</span> name, uvm_component parent);
+		<span class=hljs-keyword >super</span><span class=hljs-variable >.new</span>(name, parent);
+	<span class=hljs-keyword >endfunction</span> : <span class=hljs-keyword >new</span>
+
+
+	<span class=hljs-keyword >function</span> <span class=hljs-keyword >void</span> build_phase(uvm_phase phase);
+		<span class=hljs-keyword >super</span><span class=hljs-variable >.build_phase</span>(phase);
+		cthulhu_ap = <span class=hljs-keyword >new</span>(<span class=hljs-variable >.name</span>(<span class=hljs-string >&quot;cthulhu_ap&quot;</span>), <span class=hljs-variable >.parent</span>(<span class=hljs-keyword >this</span>));
+
+		monitor = cthulhu_monitor::type_id::create(<span class=hljs-string >&quot;monitor&quot;</span>, <span class=hljs-keyword >this</span>);
+
+		<span class=hljs-keyword >if</span>(get_is_active() == UVM_ACTIVE) <span class=hljs-keyword >begin</span>
+			driver    = cthulhu_driver::type_id::create(<span class=hljs-string >&quot;driver&quot;</span>, <span class=hljs-keyword >this</span>);
+			sequencer = cthulhu_sequencer::type_id::create(<span class=hljs-string >&quot;sequencer&quot;</span>, <span class=hljs-keyword >this</span>);
+		<span class=hljs-keyword >end</span>
+		
+		m_adapter = cthulhu_adapter::type_id::create(<span class=hljs-string >&quot;m_adapter&quot;</span>,, get_full_name());
+
+	<span class=hljs-keyword >endfunction</span> : build_phase
+	
+
+	<span class=hljs-keyword >function</span> <span class=hljs-keyword >void</span> connect_phase(uvm_phase phase);
+		<span class=hljs-keyword >if</span>(get_is_active() == UVM_ACTIVE) <span class=hljs-keyword >begin</span>
+			driver<span class=hljs-variable >.seq_item_port</span><span class=hljs-variable >.connect</span>(sequencer<span class=hljs-variable >.seq_item_export</span>);
+		<span class=hljs-keyword >end</span>
+		
+		monitor<span class=hljs-variable >.item_collected_port</span><span class=hljs-variable >.connect</span>(cthulhu_ap);
+		
+	<span class=hljs-keyword >endfunction</span> : connect_phase
+
+<span class=hljs-keyword >endclass</span> : cthulhu_agent</code></pre> <h2 id=cthulhuenvironmentsv ><a href="#cthulhuenvironmentsv" class=header-anchor >cthulhu&#95;environment.sv</a></h2> <pre><code class="verilog hljs"><span class=hljs-keyword >typedef</span> uvm_reg_predictor<span class=hljs-variable >#(cthulhu_transaction)</span> cthulhu_reg_predictor;
+
+<span class=hljs-keyword >class</span> cthulhu_environment <span class=hljs-keyword >extends</span> uvm_env;
+	`uvm_component_utils(cthulhu_environment)
+  
+	cthulhu_agent      		cthulhu_agnt;
+	cthulhu_reg_predictor 	cthulhu_pred;
+	
+
+	<span class=hljs-keyword >function</span> <span class=hljs-keyword >new</span>(<span class=hljs-keyword >string</span> name, uvm_component parent);
+		<span class=hljs-keyword >super</span><span class=hljs-variable >.new</span>(name, parent);
+	<span class=hljs-keyword >endfunction</span> : <span class=hljs-keyword >new</span>
+
+
+	<span class=hljs-keyword >function</span> <span class=hljs-keyword >void</span> build_phase(uvm_phase phase);
+		<span class=hljs-keyword >super</span><span class=hljs-variable >.build_phase</span>(phase);
+		cthulhu_agnt = cthulhu_agent::type_id::create(<span class=hljs-string >&quot;cthulhu_agnt&quot;</span>, <span class=hljs-keyword >this</span>);
+	
+		cthulhu_pred = cthulhu_reg_predictor::type_id::create(<span class=hljs-string >&quot;cthulhu_pred&quot;</span>, <span class=hljs-keyword >this</span>);
+		
+	<span class=hljs-keyword >endfunction</span> : build_phase
+	
+
+	<span class=hljs-keyword >function</span> <span class=hljs-keyword >void</span> connect_phase(uvm_phase phase);
+		cthulhu_pred<span class=hljs-variable >.adapter</span> = cthulhu_agnt<span class=hljs-variable >.m_adapter</span>;
+		cthulhu_agnt<span class=hljs-variable >.cthulhu_ap</span><span class=hljs-variable >.connect</span>(cthulhu_pred<span class=hljs-variable >.bus_in</span>);
+	<span class=hljs-keyword >endfunction</span> : connect_phase
+
+<span class=hljs-keyword >endclass</span> : cthulhu_environment</code></pre> <h2 id=cthulhu_interfacesv ><a href="#cthulhu_interfacesv" class=header-anchor >cthulhu_interface.sv</a></h2> <pre><code class="verilog hljs"><span class=hljs-keyword >interface</span> cthulhu_interface(<span class=hljs-keyword >input</span> <span class=hljs-keyword >logic</span> clk,rst_n);
+  
+  <span class=hljs-keyword >logic</span> [<span class=hljs-number >11</span>:<span class=hljs-number >0</span>] addr;
+  <span class=hljs-keyword >logic</span>        write_en;
+  <span class=hljs-keyword >logic</span>        valid;
+  <span class=hljs-keyword >logic</span> [<span class=hljs-number >7</span>:<span class=hljs-number >0</span>]  data_w;
+  <span class=hljs-keyword >logic</span> [<span class=hljs-number >7</span>:<span class=hljs-number >0</span>]  data_r;
+  
+  <span class=hljs-keyword >clocking</span> driver_cb @(<span class=hljs-keyword >posedge</span> clk);
+    <span class=hljs-keyword >default</span> <span class=hljs-keyword >input</span> #<span class=hljs-number >1</span> <span class=hljs-keyword >output</span> #<span class=hljs-number >1</span>;
+    <span class=hljs-keyword >output</span> addr;
+    <span class=hljs-keyword >output</span> write_en;
+    <span class=hljs-keyword >output</span> valid;
+    <span class=hljs-keyword >output</span> data_w;
+    <span class=hljs-keyword >input</span>  data_r;  
+  <span class=hljs-keyword >endclocking</span>
+  
+
+  <span class=hljs-keyword >clocking</span> monitor_cb @(<span class=hljs-keyword >posedge</span> clk);
+    <span class=hljs-keyword >default</span> <span class=hljs-keyword >input</span> #<span class=hljs-number >1</span> <span class=hljs-keyword >output</span> #<span class=hljs-number >1</span>;
+    <span class=hljs-keyword >input</span> addr;
+    <span class=hljs-keyword >input</span> write_en;
+    <span class=hljs-keyword >input</span> valid;
+    <span class=hljs-keyword >input</span> data_w;
+    <span class=hljs-keyword >input</span> data_r;  
+  <span class=hljs-keyword >endclocking</span>
+  
+
+  <span class=hljs-keyword >modport</span> DRIVER  (<span class=hljs-keyword >clocking</span> driver_cb,<span class=hljs-keyword >input</span> clk,rst_n);
+  <span class=hljs-keyword >modport</span> MONITOR (<span class=hljs-keyword >clocking</span> monitor_cb,<span class=hljs-keyword >input</span> clk,rst_n);
+  
+<span class=hljs-keyword >endinterface</span> : cthulhu_interface</code></pre> <h2 id=cthulhu_transactionsv ><a href="#cthulhu_transactionsv" class=header-anchor >cthulhu_transaction.sv</a></h2> <pre><code class="verilog hljs"><span class=hljs-keyword >class</span> cthulhu_transaction <span class=hljs-keyword >extends</span> uvm_sequence_item;
+
+    <span class=hljs-keyword >rand</span> <span class=hljs-keyword >bit</span> [<span class=hljs-number >11</span>:<span class=hljs-number >0</span>] addr;
+    <span class=hljs-keyword >rand</span> <span class=hljs-keyword >bit</span>        write_en;
+    <span class=hljs-keyword >rand</span> <span class=hljs-keyword >bit</span> [<span class=hljs-number >7</span>:<span class=hljs-number >0</span>]  data_w;
+    <span class=hljs-keyword >rand</span> <span class=hljs-keyword >bit</span> [<span class=hljs-number >7</span>:<span class=hljs-number >0</span>]  data_r;
+    
+
+    `uvm_object_utils_begin(cthulhu_transaction)
+        `uvm_field_int(addr,UVM_ALL_ON)
+        `uvm_field_int(write_en,UVM_ALL_ON)
+        `uvm_field_int(data_w,UVM_ALL_ON)
+    `uvm_object_utils_end
+
+    <span class=hljs-keyword >function</span> <span class=hljs-keyword >new</span>(<span class=hljs-keyword >string</span> name = <span class=hljs-string >&quot;cthulhu_transaction&quot;</span>);
+        <span class=hljs-keyword >super</span><span class=hljs-variable >.new</span>(name);
+    <span class=hljs-keyword >endfunction</span>
+    
+<span class=hljs-keyword >endclass</span></code></pre> <h2 id=cthulhudriversv ><a href="#cthulhudriversv" class=header-anchor >cthulhu&#95;driver.sv</a></h2> <pre><code class="verilog hljs"><span class=hljs-meta >`<span class=hljs-keyword >define</span> DRIV_IF vif.DRIVER.driver_cb</span>
+<span class=hljs-keyword >typedef</span> <span class=hljs-keyword >virtual</span> cthulhu_interface ct_vif;
+
+
+<span class=hljs-keyword >class</span> cthulhu_driver <span class=hljs-keyword >extends</span> uvm_driver <span class=hljs-variable >#(cthulhu_transaction)</span>;
+    `uvm_component_utils(cthulhu_driver)
+    
+    ct_vif vif;
+    
+    <span class=hljs-keyword >function</span> <span class=hljs-keyword >new</span> (<span class=hljs-keyword >string</span> name, uvm_component parent);
+        <span class=hljs-keyword >super</span><span class=hljs-variable >.new</span>(name, parent);
+    <span class=hljs-keyword >endfunction</span> : <span class=hljs-keyword >new</span>
+
+
+    <span class=hljs-keyword >function</span> <span class=hljs-keyword >void</span> build_phase(uvm_phase phase);
+        <span class=hljs-keyword >super</span><span class=hljs-variable >.build_phase</span>(phase);
+        <span class=hljs-keyword >if</span>(!uvm_config_db<span class=hljs-variable >#(ct_vif)::get(this, &quot;&quot;, &quot;vif&quot;, vif))</span>
+        `uvm_fatal(<span class=hljs-string >&quot;NO_VIF&quot;</span>,{<span class=hljs-string >&quot;virtual interface must be set for: &quot;</span>,get_full_name(),<span class=hljs-string >&quot;.vif&quot;</span>});
+    <span class=hljs-keyword >endfunction</span>: build_phase
+ 
+
+    <span class=hljs-keyword >virtual</span> <span class=hljs-keyword >task</span> run_phase(uvm_phase phase);
+        <span class=hljs-keyword >forever</span> <span class=hljs-keyword >begin</span>
+        seq_item_port<span class=hljs-variable >.get_next_item</span>(req);
+        drive();
+        seq_item_port<span class=hljs-variable >.item_done</span>();
+        <span class=hljs-keyword >end</span>
+    <span class=hljs-keyword >endtask</span> : run_phase
+    
+
+    <span class=hljs-keyword >virtual</span> <span class=hljs-keyword >task</span> drive();
+        `DRIV_IF<span class=hljs-variable >.write_en</span> &lt;= <span class=hljs-number >0</span>;
+        @(<span class=hljs-keyword >posedge</span> vif<span class=hljs-variable >.DRIVER</span><span class=hljs-variable >.clk</span>);
+        
+        `DRIV_IF<span class=hljs-variable >.addr</span> &lt;= req<span class=hljs-variable >.addr</span>;
+
+        `DRIV_IF<span class=hljs-variable >.valid</span> &lt;= <span class=hljs-number >1</span>;
+        `DRIV_IF<span class=hljs-variable >.write_en</span> &lt;= req<span class=hljs-variable >.write_en</span>;
+        <span class=hljs-keyword >if</span>(req<span class=hljs-variable >.write_en</span>) <span class=hljs-keyword >begin</span>
+            `DRIV_IF<span class=hljs-variable >.data_w</span> &lt;= req<span class=hljs-variable >.data_w</span>;
+            @(<span class=hljs-keyword >posedge</span> vif<span class=hljs-variable >.DRIVER</span><span class=hljs-variable >.clk</span>);
+        <span class=hljs-keyword >end</span>
+        <span class=hljs-keyword >else</span> <span class=hljs-keyword >begin</span>
+        @(<span class=hljs-keyword >posedge</span> vif<span class=hljs-variable >.DRIVER</span><span class=hljs-variable >.clk</span>);
+            `DRIV_IF<span class=hljs-variable >.valid</span> &lt;= <span class=hljs-number >0</span>;
+            @(<span class=hljs-keyword >posedge</span> vif<span class=hljs-variable >.DRIVER</span><span class=hljs-variable >.clk</span>);
+            req<span class=hljs-variable >.data_r</span> = `DRIV_IF<span class=hljs-variable >.data_r</span>;
+        <span class=hljs-keyword >end</span>
+        `DRIV_IF<span class=hljs-variable >.valid</span> &lt;= <span class=hljs-number >0</span>;
+        
+    <span class=hljs-keyword >endtask</span> : drive
+
+<span class=hljs-keyword >endclass</span> : cthulhu_driver</code></pre> <h2 id=cthulhumonitorsv ><a href="#cthulhumonitorsv" class=header-anchor >cthulhu&#95;monitor.sv</a></h2> <pre><code class="verilog hljs"><span class=hljs-keyword >class</span> cthulhu_monitor <span class=hljs-keyword >extends</span> uvm_monitor;
+	`uvm_component_utils(cthulhu_monitor)
+
+
+	ct_vif vif;
+	uvm_analysis_port <span class=hljs-variable >#(cthulhu_transaction)</span> item_collected_port;
+	
+
+	<span class=hljs-keyword >function</span> <span class=hljs-keyword >new</span>(<span class=hljs-keyword >string</span> name, uvm_component parent);
+		<span class=hljs-keyword >super</span><span class=hljs-variable >.new</span>(name, parent);
+		item_collected_port = <span class=hljs-keyword >new</span>(<span class=hljs-string >&quot;item_collected_port&quot;</span>, <span class=hljs-keyword >this</span>);
+	<span class=hljs-keyword >endfunction</span> : <span class=hljs-keyword >new</span>
+
+
+	<span class=hljs-keyword >function</span> <span class=hljs-keyword >void</span> build_phase(uvm_phase phase);
+		<span class=hljs-keyword >super</span><span class=hljs-variable >.build_phase</span>(phase);
+		<span class=hljs-keyword >if</span>(!uvm_config_db<span class=hljs-variable >#(ct_vif)::get(this, &quot;&quot;, &quot;vif&quot;, vif))</span>
+		`uvm_fatal(<span class=hljs-string >&quot;NOVIF&quot;</span>,{<span class=hljs-string >&quot;virtual interface must be set for: &quot;</span>,get_full_name(),<span class=hljs-string >&quot;.vif&quot;</span>});
+	<span class=hljs-keyword >endfunction</span>: build_phase
+	
+
+	<span class=hljs-keyword >virtual</span> <span class=hljs-keyword >task</span> run_phase(uvm_phase phase);
+		<span class=hljs-keyword >forever</span> <span class=hljs-keyword >begin</span>
+		cthulhu_transaction trans_collected;
+		trans_collected = <span class=hljs-keyword >new</span>();
+		@(<span class=hljs-keyword >posedge</span> vif<span class=hljs-variable >.MONITOR</span><span class=hljs-variable >.clk</span>);
+		<span class=hljs-keyword >wait</span>(vif<span class=hljs-variable >.monitor_cb</span><span class=hljs-variable >.valid</span>);
+			trans_collected<span class=hljs-variable >.addr</span> = vif<span class=hljs-variable >.monitor_cb</span><span class=hljs-variable >.addr</span>;
+			trans_collected<span class=hljs-variable >.write_en</span> = vif<span class=hljs-variable >.monitor_cb</span><span class=hljs-variable >.write_en</span>;
+		
+		<span class=hljs-keyword >if</span>(vif<span class=hljs-variable >.monitor_cb</span><span class=hljs-variable >.write_en</span>) <span class=hljs-keyword >begin</span>
+			trans_collected<span class=hljs-variable >.write_en</span> = vif<span class=hljs-variable >.monitor_cb</span><span class=hljs-variable >.write_en</span>;
+			trans_collected<span class=hljs-variable >.data_w</span> = vif<span class=hljs-variable >.monitor_cb</span><span class=hljs-variable >.data_w</span>;
+			@(<span class=hljs-keyword >posedge</span> vif<span class=hljs-variable >.MONITOR</span><span class=hljs-variable >.clk</span>);
+		<span class=hljs-keyword >end</span>
+		<span class=hljs-keyword >else</span> <span class=hljs-keyword >begin</span>
+			@(<span class=hljs-keyword >posedge</span> vif<span class=hljs-variable >.MONITOR</span><span class=hljs-variable >.clk</span>);
+			@(<span class=hljs-keyword >posedge</span> vif<span class=hljs-variable >.MONITOR</span><span class=hljs-variable >.clk</span>);
+			trans_collected<span class=hljs-variable >.data_r</span> = vif<span class=hljs-variable >.monitor_cb</span><span class=hljs-variable >.data_r</span>;
+		<span class=hljs-keyword >end</span>
+		item_collected_port<span class=hljs-variable >.write</span>(trans_collected);
+		<span class=hljs-keyword >end</span> 
+	<span class=hljs-keyword >endtask</span> : run_phase
+
+<span class=hljs-keyword >endclass</span> : cthulhu_monitor</code></pre> <h2 id=cthulhumanagersv ><a href="#cthulhumanagersv" class=header-anchor >cthulhu&#95;manager.sv</a></h2> <pre><code class="verilog hljs"><span class=hljs-keyword >module</span> cthulhu_manager(
+    <span class=hljs-keyword >input</span>         clk,
+    <span class=hljs-keyword >input</span>         rst_n,
+    <span class=hljs-keyword >input</span>  [<span class=hljs-number >11</span>:<span class=hljs-number >0</span>] addr,
+    <span class=hljs-keyword >input</span>         write_en,
+    <span class=hljs-keyword >input</span>         valid,
+    <span class=hljs-keyword >input</span>  [<span class=hljs-number >7</span>:<span class=hljs-number >0</span>]  data_w,
+    <span class=hljs-keyword >output</span> [<span class=hljs-number >7</span>:<span class=hljs-number >0</span>]  data_r
+);
+
+    life_st life; 
+    sanity_st sanity;
+    status_st status;
+	
+  	<span class=hljs-keyword >logic</span> [<span class=hljs-number >7</span>:<span class=hljs-number >0</span>] t_data;
+  
+  	
+    <span class=hljs-keyword >assign</span> data_r = t_data;
+    
+  
+    <span class=hljs-keyword >always_ff</span>@(<span class=hljs-keyword >posedge</span> clk, <span class=hljs-keyword >negedge</span> rst_n) <span class=hljs-keyword >begin</span>
+        <span class=hljs-keyword >if</span>(~rst_n) <span class=hljs-keyword >begin</span>
+            life   &lt;= <span class=hljs-number >0</span>;
+            sanity &lt;= <span class=hljs-number >0</span>;
+        <span class=hljs-keyword >end</span>
+        <span class=hljs-keyword >else</span> <span class=hljs-keyword >if</span>(write_en &amp; valid) <span class=hljs-keyword >begin</span>
+            <span class=hljs-keyword >case</span>(addr)
+                <span class=hljs-number >12&#x27;h100</span>: life   &lt;= data_w;
+                <span class=hljs-number >12&#x27;h200</span>: sanity &lt;= data_w;
+                <span class=hljs-keyword >default</span>: life   &lt;= data_w;
+            <span class=hljs-keyword >endcase</span>
+        <span class=hljs-keyword >end</span>
+      	<span class=hljs-keyword >else</span> <span class=hljs-keyword >if</span> (!write_en &amp; valid) <span class=hljs-keyword >begin</span>
+        	<span class=hljs-keyword >case</span>(addr)
+              <span class=hljs-number >12&#x27;h300</span>: t_data &lt;= status;
+              <span class=hljs-keyword >default</span>: t_data &lt;= <span class=hljs-number >8&#x27;b0</span>;
+            <span class=hljs-keyword >endcase</span>
+      	<span class=hljs-keyword >end</span>
+    <span class=hljs-keyword >end</span>
+
+    <span class=hljs-keyword >always_ff</span>@(<span class=hljs-keyword >posedge</span> clk, <span class=hljs-keyword >negedge</span> rst_n) <span class=hljs-keyword >begin</span>
+        <span class=hljs-keyword >if</span>(~rst_n) <span class=hljs-keyword >begin</span>
+            status &lt;= <span class=hljs-number >0</span>;
+        <span class=hljs-keyword >end</span>
+        <span class=hljs-keyword >else</span> <span class=hljs-keyword >begin</span>
+            <span class=hljs-keyword >if</span>(life<span class=hljs-variable >.current_health</span> == <span class=hljs-number >&#x27;h0</span>) <span class=hljs-keyword >begin</span>
+                status<span class=hljs-variable >.is_dead</span> &lt;= <span class=hljs-number >1&#x27;b1</span>;
+                status<span class=hljs-variable >.is_wounded</span> &lt;= <span class=hljs-number >1&#x27;b0</span>;
+                status<span class=hljs-variable >.is_healthy</span> &lt;= <span class=hljs-number >1&#x27;b0</span>;
+            <span class=hljs-keyword >end</span> <span class=hljs-keyword >else</span> <span class=hljs-keyword >if</span>(life<span class=hljs-variable >.current_health</span> &lt; life<span class=hljs-variable >.max_health</span>/<span class=hljs-number >2</span>) <span class=hljs-keyword >begin</span>
+                status<span class=hljs-variable >.is_dead</span> &lt;= <span class=hljs-number >1&#x27;b0</span>;
+                status<span class=hljs-variable >.is_wounded</span> &lt;= <span class=hljs-number >1&#x27;b1</span>;
+                status<span class=hljs-variable >.is_healthy</span> &lt;= <span class=hljs-number >1&#x27;b0</span>;
+            <span class=hljs-keyword >end</span> <span class=hljs-keyword >else</span> <span class=hljs-keyword >begin</span>
+                status<span class=hljs-variable >.is_dead</span> &lt;= <span class=hljs-number >1&#x27;b0</span>;
+                status<span class=hljs-variable >.is_wounded</span> &lt;= <span class=hljs-number >1&#x27;b0</span>;
+                status<span class=hljs-variable >.is_healthy</span> &lt;= <span class=hljs-number >1&#x27;b1</span>;
+            <span class=hljs-keyword >end</span>
+
+            <span class=hljs-keyword >if</span>(sanity<span class=hljs-variable >.current_sanity</span> == <span class=hljs-number >&#x27;h0</span>) <span class=hljs-keyword >begin</span>
+                status<span class=hljs-variable >.is_mad</span> &lt;= <span class=hljs-number >1&#x27;b1</span>;
+                status<span class=hljs-variable >.is_going_mad</span> &lt;= <span class=hljs-number >1&#x27;b0</span>;
+                status<span class=hljs-variable >.is_sane</span> &lt;= <span class=hljs-number >1&#x27;b0</span>;
+            <span class=hljs-keyword >end</span> <span class=hljs-keyword >else</span> <span class=hljs-keyword >if</span>(sanity<span class=hljs-variable >.current_sanity</span> &lt;= sanity<span class=hljs-variable >.max_sanity</span>/<span class=hljs-number >2</span>) <span class=hljs-keyword >begin</span>
+                status<span class=hljs-variable >.is_mad</span> &lt;= <span class=hljs-number >1&#x27;b0</span>;
+                status<span class=hljs-variable >.is_going_mad</span> &lt;= <span class=hljs-number >1&#x27;b1</span>;
+                status<span class=hljs-variable >.is_sane</span> &lt;= <span class=hljs-number >1&#x27;b0</span>;
+            <span class=hljs-keyword >end</span> <span class=hljs-keyword >else</span> <span class=hljs-keyword >begin</span>
+                status<span class=hljs-variable >.is_mad</span> &lt;= <span class=hljs-number >1&#x27;b0</span>;
+                status<span class=hljs-variable >.is_going_mad</span> &lt;= <span class=hljs-number >1&#x27;b0</span>;
+                status<span class=hljs-variable >.is_sane</span> &lt;= <span class=hljs-number >1&#x27;b1</span>;
+            <span class=hljs-keyword >end</span>
+
+        <span class=hljs-keyword >end</span>
+    <span class=hljs-keyword >end</span>
+
+
+<span class=hljs-keyword >endmodule</span> : cthulhu_manager</code></pre> <h2 id=cthulhuregsequencesv ><a href="#cthulhuregsequencesv" class=header-anchor >cthulhu&#95;reg&#95;sequence.sv</a></h2> <pre><code class="verilog hljs"><span class=hljs-keyword >class</span> cthulhu_reg_sequence <span class=hljs-keyword >extends</span> uvm_sequence;
+	`uvm_object_utils(cthulhu_reg_sequence)
+	
+	cthulhu_reg_block regmodel;
+	
+
+	<span class=hljs-keyword >function</span> <span class=hljs-keyword >new</span>(<span class=hljs-keyword >string</span> name = <span class=hljs-string >&quot;cthulhu_reg_sequence&quot;</span>); 
+		<span class=hljs-keyword >super</span><span class=hljs-variable >.new</span>(name);    
+	<span class=hljs-keyword >endfunction</span>
+   
+	<span class=hljs-keyword >task</span> body;  
+		uvm_status_e   status;
+		uvm_reg_data_t incoming;
+		
+		<span class=hljs-keyword >if</span> (starting_phase != <span class=hljs-literal >null</span>)
+			starting_phase<span class=hljs-variable >.raise_objection</span>(<span class=hljs-keyword >this</span>);
+		
+		<span class=hljs-comment >//Write to the Registers</span>
+		regmodel<span class=hljs-variable >.ct_sanity_reg</span><span class=hljs-variable >.write</span>(status, <span class=hljs-number >8</span>&#x27;F5);
+		regmodel<span class=hljs-variable >.ct_life_reg</span><span class=hljs-variable >.write</span>(status, <span class=hljs-number >8</span>&#x27;F0);
+		
+		<span class=hljs-comment >//Read from the registers</span>
+		regmodel<span class=hljs-variable >.ct_status_reg</span><span class=hljs-variable >.read</span>(status, incoming);
+		
+		<span class=hljs-keyword >if</span> (starting_phase != <span class=hljs-literal >null</span>)
+			starting_phase<span class=hljs-variable >.drop_objection</span>(<span class=hljs-keyword >this</span>);  
+		
+	<span class=hljs-keyword >endtask</span>: body
+<span class=hljs-keyword >endclass</span> : cthulhu_reg_sequence</code></pre> <h2 id=cthulhubasetestsv ><a href="#cthulhubasetestsv" class=header-anchor >cthulhu&#95;base&#95;test.sv</a></h2> <pre><code class="verilog hljs"><span class=hljs-keyword >class</span> cthulhu_base_test <span class=hljs-keyword >extends</span> uvm_test;
+    `uvm_component_utils(cthulhu_base_test)
+    
+  
+    cthulhu_environment env;
+    cthulhu_reg_block   regmodel;   
+  
+  
+    <span class=hljs-keyword >function</span> <span class=hljs-keyword >new</span>(<span class=hljs-keyword >string</span> name = <span class=hljs-string >&quot;cthulhu_base_test&quot;</span>,uvm_component parent=<span class=hljs-literal >null</span>);
+        <span class=hljs-keyword >super</span><span class=hljs-variable >.new</span>(name,parent);
+    <span class=hljs-keyword >endfunction</span> : <span class=hljs-keyword >new</span>
+  
+    
+    <span class=hljs-keyword >virtual</span> <span class=hljs-keyword >function</span> <span class=hljs-keyword >void</span> build_phase(uvm_phase phase);
+        <span class=hljs-keyword >super</span><span class=hljs-variable >.build_phase</span>(phase);
+        regmodel = cthulhu_reg_block::type_id::create(<span class=hljs-string >&quot;regmodel&quot;</span>, <span class=hljs-keyword >this</span>);
+        regmodel<span class=hljs-variable >.build</span>();
+         
+        env = cthulhu_environment::type_id::create(<span class=hljs-string >&quot;env&quot;</span>, <span class=hljs-keyword >this</span>);
+    <span class=hljs-keyword >endfunction</span> : build_phase
+
+    
+    <span class=hljs-keyword >virtual</span> <span class=hljs-keyword >function</span> <span class=hljs-keyword >void</span> connect_phase(uvm_phase phase);
+        <span class=hljs-keyword >super</span><span class=hljs-variable >.connect_phase</span>(phase);
+    
+        env<span class=hljs-variable >.cthulhu_pred</span><span class=hljs-variable >.map</span> = regmodel<span class=hljs-variable >.reg_map</span>;
+        regmodel<span class=hljs-variable >.reg_map</span><span class=hljs-variable >.set_sequencer</span>(<span class=hljs-variable >.sequencer</span>(env<span class=hljs-variable >.cthulhu_agnt</span><span class=hljs-variable >.sequencer</span>), <span class=hljs-variable >.adapter</span>(env<span class=hljs-variable >.cthulhu_agnt</span><span class=hljs-variable >.m_adapter</span>) );
+        regmodel<span class=hljs-variable >.default_map</span><span class=hljs-variable >.set_base_addr</span>(<span class=hljs-number >&#x27;h100</span>);      
+    <span class=hljs-keyword >endfunction</span> : connect_phase
+    
+
+    <span class=hljs-keyword >virtual</span> <span class=hljs-keyword >function</span> <span class=hljs-keyword >void</span> end_of_elaboration();
+        print();
+    <span class=hljs-keyword >endfunction</span>
+  
+
+   <span class=hljs-keyword >function</span> <span class=hljs-keyword >void</span> report_phase(uvm_phase phase);
+    uvm_report_server svr;
+    <span class=hljs-keyword >super</span><span class=hljs-variable >.report_phase</span>(phase);
+    
+    svr = uvm_report_server::get_server();
+    <span class=hljs-keyword >if</span>(svr<span class=hljs-variable >.get_severity_count</span>(UVM_FATAL)+svr<span class=hljs-variable >.get_severity_count</span>(UVM_ERROR)&gt;<span class=hljs-number >0</span>) <span class=hljs-keyword >begin</span>
+        `uvm_info(get_type_name(), <span class=hljs-string >&quot;***************************************&quot;</span>, UVM_NONE)
+        `uvm_info(get_type_name(), <span class=hljs-string >&quot;****   FAILED, YOU ARE GOING MAD   ****&quot;</span>, UVM_NONE)
+        `uvm_info(get_type_name(), <span class=hljs-string >&quot;***************************************&quot;</span>, UVM_NONE)
+    <span class=hljs-keyword >end</span>
+    <span class=hljs-keyword >else</span> <span class=hljs-keyword >begin</span>
+        `uvm_info(get_type_name(), <span class=hljs-string >&quot;***************************************&quot;</span>, UVM_NONE)
+        `uvm_info(get_type_name(), <span class=hljs-string >&quot;*** PASSED, THE GREAT ONE GOES AWAY ***&quot;</span>, UVM_NONE)
+        `uvm_info(get_type_name(), <span class=hljs-string >&quot;***************************************&quot;</span>, UVM_NONE)
+    <span class=hljs-keyword >end</span>
+    <span class=hljs-keyword >endfunction</span> 
+  
+<span class=hljs-keyword >endclass</span> : cthulhu_base_test</code></pre> <h2 id=cthulhuregtestsv ><a href="#cthulhuregtestsv" class=header-anchor >cthulhu&#95;reg&#95;test.sv</a></h2> <pre><code class="verilog hljs"><span class=hljs-keyword >class</span> cthulhu_reg_test <span class=hljs-keyword >extends</span> cthulhu_base_test;
+  	`uvm_component_utils(cthulhu_reg_test)
+
+  	cthulhu_reg_sequence reg_seq;
+
+
+	<span class=hljs-keyword >function</span> <span class=hljs-keyword >new</span>(<span class=hljs-keyword >string</span> name = <span class=hljs-string >&quot;cthulhu_reg_test&quot;</span>,uvm_component parent=<span class=hljs-literal >null</span>);
+		<span class=hljs-keyword >super</span><span class=hljs-variable >.new</span>(name,parent);
+	<span class=hljs-keyword >endfunction</span> : <span class=hljs-keyword >new</span>
+
+
+	<span class=hljs-keyword >virtual</span> <span class=hljs-keyword >function</span> <span class=hljs-keyword >void</span> build_phase(uvm_phase phase);
+		<span class=hljs-keyword >super</span><span class=hljs-variable >.build_phase</span>(phase);
+
+		reg_seq = cthulhu_reg_sequence::type_id::create(<span class=hljs-string >&quot;reg_seq&quot;</span>);
+	<span class=hljs-keyword >endfunction</span> : build_phase
+	
+
+	<span class=hljs-keyword >task</span> run_phase(uvm_phase phase);
+		
+		phase<span class=hljs-variable >.raise_objection</span>(<span class=hljs-keyword >this</span>);
+		<span class=hljs-keyword >if</span> ( !reg_seq<span class=hljs-variable >.randomize</span>() ) `uvm_error(<span class=hljs-string >&quot;&quot;</span>, <span class=hljs-string >&quot;Randomize failed&quot;</span>)
+		reg_seq<span class=hljs-variable >.regmodel</span>       = regmodel;
+		reg_seq<span class=hljs-variable >.starting_phase</span> = phase;
+		reg_seq<span class=hljs-variable >.start</span>(env<span class=hljs-variable >.cthulhu_agnt</span><span class=hljs-variable >.sequencer</span>); 
+		phase<span class=hljs-variable >.drop_objection</span>(<span class=hljs-keyword >this</span>);
+		
+		<span class=hljs-comment >//set a drain-time for the environment if desired</span>
+		phase<span class=hljs-variable >.phase_done</span><span class=hljs-variable >.set_drain_time</span>(<span class=hljs-keyword >this</span>, <span class=hljs-number >50</span>);
+	<span class=hljs-keyword >endtask</span> : run_phase
+  
+<span class=hljs-keyword >endclass</span> : cthulhu_reg_test</code></pre> <h2 id=testbenchsv ><a href="#testbenchsv" class=header-anchor >testbench.sv</a></h2> <pre><code class="verilog hljs"><span class=hljs-keyword >module</span> tbench_top;
+
+  <span class=hljs-keyword >bit</span> clk;
+  <span class=hljs-keyword >bit</span> rst_n;
+
+  <span class=hljs-keyword >always</span> #<span class=hljs-number >5</span> clk = ~clk;
+
+  <span class=hljs-keyword >initial</span> <span class=hljs-keyword >begin</span>
+    rst_n = <span class=hljs-number >1</span>;
+    #<span class=hljs-number >5</span> rst_n = <span class=hljs-number >0</span>;
+    #<span class=hljs-number >5</span> rst_n = <span class=hljs-number >1</span>;
+  <span class=hljs-keyword >end</span>
+
+  cthulhu_interface intf(clk,rst_n);
+  
+
+  cthulhu_manager DUT (
+    <span class=hljs-variable >.clk</span>(intf<span class=hljs-variable >.clk</span>),
+    <span class=hljs-variable >.rst_n</span>(intf<span class=hljs-variable >.rst_n</span>),
+    <span class=hljs-variable >.addr</span>(intf<span class=hljs-variable >.addr</span>),
+    <span class=hljs-variable >.write_en</span>(intf<span class=hljs-variable >.write_en</span>),
+    <span class=hljs-variable >.valid</span>(intf<span class=hljs-variable >.valid</span>),
+    <span class=hljs-variable >.data_w</span>(intf<span class=hljs-variable >.data_w</span>),
+    <span class=hljs-variable >.data_r</span>(intf<span class=hljs-variable >.data_r</span>)
+   );
+  
+
+  <span class=hljs-keyword >initial</span> <span class=hljs-keyword >begin</span> 
+    uvm_config_db<span class=hljs-variable >#(virtual cthulhu_interface)::set(uvm_root::get(),&quot;*&quot;,&quot;vif&quot;, intf)</span>;
+    <span class=hljs-built_in >$dumpfile</span>(<span class=hljs-string >&quot;dump.vcd&quot;</span>); 
+    <span class=hljs-built_in >$dumpvars</span>;
+  <span class=hljs-keyword >end</span>
+  
+  <span class=hljs-keyword >initial</span> <span class=hljs-keyword >begin</span> 
+    run_test();
+  <span class=hljs-keyword >end</span>
+  
+<span class=hljs-keyword >endmodule</span></code></pre> <div class=page-foot > <a href="http://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> João Pedro Melquiades Gomes. Last modified: December 13, 2022. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a> and the <a href="https://julialang.org">Julia programming language</a>. </div> </div> </div> </div> <script src="/ral/libs/pure/ui.min.js"></script> <script src="/ral/libs/highlight/highlight.min.js"></script> <script>hljs.highlightAll();hljs.configure({tabReplace: ' '});</script>

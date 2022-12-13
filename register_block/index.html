@@ -1,0 +1,123 @@
+<!doctype html> <html lang=en > <meta charset=UTF-8 > <meta name=viewport  content="width=device-width, initial-scale=1"> <link rel=stylesheet  href="/ral/libs/highlight/styles/github.min.css"> <link rel=stylesheet  href="/ral/css/franklin.css"> <link rel=stylesheet  href="/ral/css/pure.css"> <link rel=stylesheet  href="/ral/css/side-menu.css"> <style> .franklin-content{padding-left:10%;} @media (min-width: 940px) { .franklin-content {width: 900px; margin-left: 0px; padding-left: 80px;} .header{width: 900px; margin-left: 0px; padding-left: 80px;} } </style> <link rel=icon  href="/ral/assets/favicon.png"> <title>Register Blocks</title> <div id=layout > <a href="#menu" id=menuLink  class=menu-link ><span></span></a> <div id=menu > <div class=pure-menu > <a class=pure-menu-heading  href="#">RAL</a> <ul class=pure-menu-list > <li class="pure-menu-item "><a href="/ral/" class=pure-menu-link >Introduction</a> <li class="pure-menu-item pure-menu-selected"><a href="/ral/register_block/" class=pure-menu-link >Register Blocks</a> <li class="pure-menu-item "><a href="/ral/adapter/" class=pure-menu-link >Adapter</a> <li class="pure-menu-item "><a href="/ral/agent/" class=pure-menu-link >The Agent</a> <li class="pure-menu-item "><a href="/ral/predictor/" class=pure-menu-link >Predictor</a> <li class="pure-menu-item "><a href="/ral/env/" class=pure-menu-link >The Env</a> <li class="pure-menu-item "><a href="/ral/breath/" class=pure-menu-link >Take a breath</a> <li class="pure-menu-item "><a href="/ral/reg_sequence/" class=pure-menu-link >Reg Sequence</a> <li class="pure-menu-item "><a href="/ral/test_file/" class=pure-menu-link >The Test</a> <li class="pure-menu-item "><a href="/ral/results/" class=pure-menu-link >Results</a> <li class="pure-menu-item "><a href="/ral/source_code/" class=pure-menu-link >Source Code</a> </ul> </div> </div> <div id=main > <div class=header > <h1>Register Blocks</h1> <h2>Hands-on to implement a simple UVM ambient with RAL</h2> </div> <div class=franklin-content > <h1 id=register_blocks_with_ral ><a href="#register_blocks_with_ral" class=header-anchor >Register Blocks with RAL</a></h1> <div class=franklin-toc ><ol><li><a href="#overview">Overview</a><li><a href="#register_fields">Register_fields</a><li><a href="#register">Register</a><li><a href="#register_block">Register Block</a></ol></div> <h2 id=overview ><a href="#overview" class=header-anchor >Overview</a></h2> <p>The bank is very simple. It has only three address &#40;three registers&#41;, and it can be observed below:</p> <p><img src="/ral/assets/memory_map.png" alt="Register bank" /></p> <p>Where each value is described in following tables:</p> <ul> <li><p>To <strong>LIFE</strong> register:</p> </ul> <table><tr><th align=center ><strong>Field</strong><th align=center ><strong>Position</strong><th align=center ><strong>Description</strong><th align=center ><strong>Access</strong><tr><td align=center >MAX_HEALTH<td align=center >&#91;7:4&#93;<td align=center >Max Health points to Player<td align=center >WO<tr><td align=center >CURRENT_HEALTH<td align=center >&#91;3:0&#93;<td align=center >Current Health points of Player<td align=center >WO</table> <ul> <li><p>To <strong>SANITY</strong> register:</p> </ul> <table><tr><th align=center ><strong>Field</strong><th align=center ><strong>Position</strong><th align=center ><strong>Description</strong><th align=center ><strong>Access</strong><tr><td align=center >MAX_SANITY<td align=center >&#91;7:4&#93;<td align=center >Max sanity points to Player<td align=center >WO<tr><td align=center >CURRENT_SANITY<td align=center >&#91;3:0&#93;<td align=center >Current sanity points of Player<td align=center >WO</table> <ul> <li><p>To <strong>STATUS</strong> register:</p> </ul> <table><tr><th align=center ><strong>Field</strong><th align=center ><strong>Position</strong><th align=center ><strong>Description</strong><th align=center ><strong>Access</strong><tr><td align=center >RESERVED<td align=center >&#91;7:6&#93;<td align=center >Reserved fields<td align=center >RO<tr><td align=center >IS_SANE<td align=center >5<td align=center >1&#39;b1 if <strong>CURRENT_SANITY</strong> is greather than half of <strong>MAX_SANITY</strong><td align=center >RO<tr><td align=center >IS<em>GOING</em>MAD<td align=center >4<td align=center >1&#39;b1 if <strong>CURRENT_SANITY</strong> is lesser than half of <strong>MAX_SANITY</strong><td align=center >RO<tr><td align=center >IS_SANE<td align=center >3<td align=center >1&#39;b1 if <strong>CURRENT_SANITY</strong> is zero<td align=center >RO<tr><td align=center >IS_HEALTHY<td align=center >2<td align=center >1&#39;b1 if <strong>CURRENT_HEALTH</strong> is greather than half of <strong>MAX_HEALTH</strong><td align=center >RO<tr><td align=center >IS_WOUNDED<td align=center >1<td align=center >1&#39;b1 if <strong>CURRENT_HEALTH</strong> is lesser than half of <strong>MAX_HEALTH</strong><td align=center >RO<tr><td align=center >IS_DEAD<td align=center >0<td align=center >1&#39;b1 if <strong>CURRENT_HEALTH</strong> is zero<td align=center >RO</table> <p>Okay, so now we can start talking about modeling these registes with RAL. But before, let&#39;s take a look in our ambient:</p> <p><img src="/ral/assets/zero_percent_diagram.png" alt="UVM environment" /></p> <p>Everything is red because we didn&#39;t implement any component, so let&#39;s start coloring this diagram.</p> <blockquote> <p>You don&#39;t need to start the entire ambient with RAL components, in this case I&#39;m doing this because the main goal of this Hands-on is to guide you into insert RAL in your ambient, explaining how each component works. The more general components won&#39;t be detailed, but the complete code will be shown somewhere in the hands-on.</p> </blockquote> <h2 id=register_fields ><a href="#register_fields" class=header-anchor >Register_fields</a></h2> <p>Fields are used to represent contiguous bit sequences. One single register can contain more than one field, and each one have your particular access policy.</p> <p>In SystemVerilog, we declare a field using the keyword <code>uvm_reg_field</code>. so, let&#39;s start modeling our register bank declaring the respective fields. This will be done in a register file, that will be explained in the following sections. I&#39;m gonna show how it is done to the <strong>LIFE</strong> register, and you can implement to the other registers following the same logic. The complete code will be available at <a href="/ral/source_code/">Source Code</a> page.</p> <pre><code class="verilog hljs"><span class=hljs-keyword >class</span> cthulhu_life_reg <span class=hljs-keyword >extends</span> uvm_reg;
+	`uvm_object_utils(cthulhu_life_reg)
+   
+	<span class=hljs-comment >//***************************************</span>
+	<span class=hljs-comment >//* Field instantiation                 *</span>
+	<span class=hljs-comment >//***************************************</span>
+	<span class=hljs-keyword >rand</span> uvm_reg_field current_health;
+	<span class=hljs-keyword >rand</span> uvm_reg_field max_health;
+	
+    ...</code></pre> <p>The rest you will discover in the next section, and it is now&#33;</p> <h2 id=register ><a href="#register" class=header-anchor >Register</a></h2> <p>A register is basically a group of fields in a same address in a given memory map. Taking our example, we have three registers. Each one will be modeled in a class that will extend the <code>uvm_reg</code> class from UVM. At this class, first we declare the fields &#40;Already done&#41;, then we define the constructor of the class. The <code>super.new&#40;&#41;</code> will receive some parameters, as show below:</p> <pre><code class="verilog hljs"><span class=hljs-keyword >function</span> <span class=hljs-keyword >new</span> (<span class=hljs-keyword >string</span> name = <span class=hljs-string >&quot;cthulhu_life_reg&quot;</span>);
+	<span class=hljs-keyword >super</span><span class=hljs-variable >.new</span>(<span class=hljs-variable >.name</span>(name), <span class=hljs-variable >.n_bits</span>(<span class=hljs-number >8</span>), <span class=hljs-variable >.has_coverage</span>(UVM_NO_COVERAGE));
+<span class=hljs-keyword >endfunction</span></code></pre> <p>The first parameter doesn&#39;t need explanation, it is just the name associated to the object. The second parameter &#40;<code>n_bits</code>&#41; will tell the size of that register in bits, and the last parameter &#40;<code>has_coverage</code>&#41; will tell if this register will be mapped to a coverage.</p> <p>Now that we have declared our fields and defined the Constructor of our register, let&#39;s configure the fields using the following function:</p> <blockquote> <p>Do not think that this <code>build&#40;&#41;</code> is related to the <code>build_phase&#40;&#41;</code> function of <code>uvm_component</code>. The <code>uvm_reg</code> is not an <code>uvm_component</code>, it is an <code>uvm_object</code> &#40;A parent class of <code>uvm_component</code>, so it doesn&#39;t have the methods of child&#41;.</p> </blockquote> <pre><code class="verilog hljs"><span class=hljs-keyword >virtual</span> <span class=hljs-keyword >function</span> <span class=hljs-keyword >void</span> build();
+    
+    <span class=hljs-comment >// Creation of the field</span>
+    max_health = uvm_reg_field::type_id::create(<span class=hljs-string >&quot;max_health&quot;</span>);   
+
+    <span class=hljs-comment >// Configuration of the field</span>
+    max_health<span class=hljs-variable >.configure</span>(<span class=hljs-variable >.parent</span>(<span class=hljs-keyword >this</span>), <span class=hljs-comment >// Parent of the field</span>
+                        <span class=hljs-variable >.size</span>(<span class=hljs-number >4</span>), <span class=hljs-comment >// The size of field is defined here, in bits</span>
+                        <span class=hljs-variable >.lsb_pos</span>(<span class=hljs-number >4</span>), <span class=hljs-comment >// The position of LSB bit of the field</span>
+                        <span class=hljs-variable >.access</span>(<span class=hljs-string >&quot;WO&quot;</span>),  <span class=hljs-comment >// Access policy. In this case, it is Write Only</span>
+                        <span class=hljs-variable >.volatile</span>(<span class=hljs-number >0</span>),  <span class=hljs-comment >// Tells if this field can be changed internally </span>
+                        <span class=hljs-variable >.reset</span>(<span class=hljs-number >4&#x27;hf</span>),  <span class=hljs-comment >// Defines the reset value of the field</span>
+                        <span class=hljs-variable >.has_reset</span>(<span class=hljs-number >1</span>), <span class=hljs-comment >// Tells if the field resets when a reset is applied</span>
+                        <span class=hljs-variable >.is_rand</span>(<span class=hljs-number >1</span>), <span class=hljs-comment >// Allows field randomization</span>
+                        <span class=hljs-variable >.individually_accessible</span>(<span class=hljs-number >0</span>)); <span class=hljs-comment >// When write() is called, the entire register is written</span>
+
+
+<span class=hljs-keyword >endfunction</span> : build</code></pre> <p>At this point, you may have noticed that the process is repetitive and boooring. We are enginneers, and we are programmers. Everything that is repetitive and boring we can transform into code to automatize. Let&#39;s automatize the configure write with a little script in julia language.</p> <pre><code class="julia hljs">max_health = [<span class=hljs-string >&quot;max_health&quot;</span>, <span class=hljs-string >&quot;this&quot;</span>, <span class=hljs-string >&quot;4&quot;</span>, <span class=hljs-string >&quot;4&quot;</span>, <span class=hljs-string >&quot;WO&quot;</span>, <span class=hljs-string >&quot;0&quot;</span>, <span class=hljs-string >&quot;4&#x27;hf&quot;</span>, <span class=hljs-string >&quot;1&quot;</span>, <span class=hljs-string >&quot;1&quot;</span>, <span class=hljs-string >&quot;0&quot;</span>]
+current_health = [<span class=hljs-string >&quot;current_health&quot;</span>, <span class=hljs-string >&quot;this&quot;</span>, <span class=hljs-string >&quot;4&quot;</span>, <span class=hljs-string >&quot;0&quot;</span>, <span class=hljs-string >&quot;WO&quot;</span>, <span class=hljs-string >&quot;0&quot;</span>, <span class=hljs-string >&quot;0&quot;</span>, <span class=hljs-string >&quot;1&quot;</span>, <span class=hljs-string >&quot;1&quot;</span>, <span class=hljs-string >&quot;0&quot;</span>]
+
+life = [max_health, current_health]
+
+<span class=hljs-keyword >for</span> field <span class=hljs-keyword >in</span> life
+    println(<span class=hljs-string >&quot;```verilog&quot;</span>)
+    println(<span class=hljs-string >&quot;<span class=hljs-subst >$(field[<span class=hljs-number >1</span>])</span>.configure(&quot;</span>)
+    println(<span class=hljs-string >&quot;   .parent(<span class=hljs-subst >$(field[<span class=hljs-number >2</span>])</span>),&quot;</span>)
+    println(<span class=hljs-string >&quot;   .size(<span class=hljs-subst >$(field[<span class=hljs-number >3</span>])</span>),&quot;</span>)
+    println(<span class=hljs-string >&quot;   .lsb_pos(<span class=hljs-subst >$(field[<span class=hljs-number >4</span>])</span>),&quot;</span>)
+    println(<span class=hljs-string >&quot;   .access(<span class=hljs-subst >$(field[<span class=hljs-number >5</span>])</span>),&quot;</span>)
+    println(<span class=hljs-string >&quot;   .volatile(<span class=hljs-subst >$(field[<span class=hljs-number >6</span>])</span>),&quot;</span>)
+    println(<span class=hljs-string >&quot;   .reset(<span class=hljs-subst >$(field[<span class=hljs-number >7</span>])</span>),&quot;</span>)
+    println(<span class=hljs-string >&quot;   .has_reset(<span class=hljs-subst >$(field[<span class=hljs-number >8</span>])</span>),&quot;</span>)
+    println(<span class=hljs-string >&quot;   .is_rand(<span class=hljs-subst >$(field[<span class=hljs-number >9</span>])</span>),&quot;</span>)
+    println(<span class=hljs-string >&quot;   .individually_accessible(<span class=hljs-subst >$(field[<span class=hljs-number >10</span>])</span>)&quot;</span>)
+    println(<span class=hljs-string >&quot;);&quot;</span>)
+    println(<span class=hljs-string >&quot;```&quot;</span>)
+<span class=hljs-keyword >end</span></code></pre> <p>The output will be:</p> <pre><code class="verilog hljs">max_health<span class=hljs-variable >.configure</span>(
+   <span class=hljs-variable >.parent</span>(<span class=hljs-keyword >this</span>),
+   <span class=hljs-variable >.size</span>(<span class=hljs-number >4</span>),
+   <span class=hljs-variable >.lsb_pos</span>(<span class=hljs-number >4</span>),
+   <span class=hljs-variable >.access</span>(WO),
+   <span class=hljs-variable >.volatile</span>(<span class=hljs-number >0</span>),
+   <span class=hljs-variable >.reset</span>(<span class=hljs-number >4&#x27;hf</span>),
+   <span class=hljs-variable >.has_reset</span>(<span class=hljs-number >1</span>),
+   <span class=hljs-variable >.is_rand</span>(<span class=hljs-number >1</span>),
+   <span class=hljs-variable >.individually_accessible</span>(<span class=hljs-number >0</span>)
+);</code></pre></p> <p><pre><code class="verilog hljs">current_health<span class=hljs-variable >.configure</span>(
+   <span class=hljs-variable >.parent</span>(<span class=hljs-keyword >this</span>),
+   <span class=hljs-variable >.size</span>(<span class=hljs-number >4</span>),
+   <span class=hljs-variable >.lsb_pos</span>(<span class=hljs-number >0</span>),
+   <span class=hljs-variable >.access</span>(WO),
+   <span class=hljs-variable >.volatile</span>(<span class=hljs-number >0</span>),
+   <span class=hljs-variable >.reset</span>(<span class=hljs-number >0</span>),
+   <span class=hljs-variable >.has_reset</span>(<span class=hljs-number >1</span>),
+   <span class=hljs-variable >.is_rand</span>(<span class=hljs-number >1</span>),
+   <span class=hljs-variable >.individually_accessible</span>(<span class=hljs-number >0</span>)
+);</code></pre> <p>Note that with these lines we just have to write the values of each field, run a loop and the program writes the file to us :D. The inputs can came from a csv file, by example, and all register can be written this way.</p> <p>Now, we have our first file. The <strong>cthulhu&#95;life&#95;reg.sv</strong></p> <h2 id=register_block ><a href="#register_block" class=header-anchor >Register Block</a></h2> <p>A Register block is a major module that will encapsulate the registers of a given DUT. Each register class created until here will be instantiated inside the Register Block class. This class can also be called Register Package. The steps to create a register block are described below:</p> <ul> <li><p>Extends <code>uvm_reg_block</code></p> <li><p>Instantiates registers</p> <li><p>Instantiates memory map</p> <li><p>Create constructor</p> <li><p>Build registers</p> <li><p>Build memory map associting each register to a given address</p> </ul> <p>Let&#39;s go step by step. First, let&#39;s instantiate all register and the memory map</p> <pre><code class="verilog hljs"><span class=hljs-keyword >class</span> cthulhu_reg_block <span class=hljs-keyword >extends</span> uvm_reg_block;
+    `uvm_object_utils(cthulhu_reg_block)
+    
+    <span class=hljs-comment >//***************************************</span>
+    <span class=hljs-comment >//* Register instantiation              *</span>
+    <span class=hljs-comment >//***************************************</span>
+    
+    cthulhu_life_reg ct_life_reg;
+    cthulhu_sanity_reg ct_sanity_reg;
+    cthulhu_status_reg ct_status_reg;
+
+    uvm_reg_map reg_map;
+
+    ...</code></pre> <p>Now, the next steps will be creating the constructor and then building the registers. It is very simple to do this:</p> <pre><code class="verilog hljs"><span class=hljs-keyword >virtual</span> <span class=hljs-keyword >function</span> <span class=hljs-keyword >void</span> build();
+    
+    <span class=hljs-comment >// Creation, build and configuration</span>
+    ct_life_reg = cthulhu_life_reg::type_id::create(<span class=hljs-string >&quot;ct_life_reg&quot;</span>);
+    ct_life_reg<span class=hljs-variable >.build</span>();
+    ct_life_reg<span class=hljs-variable >.configure</span>(<span class=hljs-keyword >this</span>);
+
+    ct_sanity_reg = cthulhu_sanity_reg::type_id::create(<span class=hljs-string >&quot;ct_sanity_reg&quot;</span>);
+    ct_sanity_reg<span class=hljs-variable >.build</span>();
+    ct_sanity_reg<span class=hljs-variable >.configure</span>(<span class=hljs-keyword >this</span>);
+    
+    ct_status_reg = cthulhu_status_reg::type_id::create(<span class=hljs-string >&quot;ct_status_reg&quot;</span>);
+    ct_status_reg<span class=hljs-variable >.build</span>();
+    ct_status_reg<span class=hljs-variable >.configure</span>(<span class=hljs-keyword >this</span>);</code></pre> <p>We are almost finishing the Register modeling part of RAL. The last thing we must do is build the memory map. We will use the function <code>create_map&#40;&#41;</code> to create the memory map. Then, we will use the function <code>add_reg&#40;&#41;</code> to add each register. Then, the <code>lock_model&#40;&#41;</code> will finish the map addressing.</p> <pre><code class="verilog hljs"><span class=hljs-comment >// Map creation</span>
+    reg_map<span class=hljs-variable >.create_map</span>(
+        <span class=hljs-variable >.name</span>(<span class=hljs-string >&quot;reg_map&quot;</span>), <span class=hljs-comment >// Just the name bro</span>
+        <span class=hljs-variable >.base_addr</span>(<span class=hljs-number >12&#x27;h100</span>), <span class=hljs-comment >// The base address of memory map &#x27;</span>
+        <span class=hljs-variable >.n_bytes</span>(<span class=hljs-number >1</span>), <span class=hljs-comment >// The number of bytes of each register</span>
+        <span class=hljs-variable >.endian</span>(UVM_LITTLE_ENDIAN) <span class=hljs-comment >// Defines order of storage values in fields</span>
+    );
+
+    <span class=hljs-comment >// Adding Registers</span>
+    reg_map<span class=hljs-variable >.add_reg</span>(
+        <span class=hljs-variable >.rg</span>(ct_life_reg), <span class=hljs-comment >//Register instance</span>
+        <span class=hljs-variable >.offset</span>(<span class=hljs-number >&#x27;h000</span>),   <span class=hljs-comment >//Address offset &#x27;</span>
+        <span class=hljs-variable >.rights</span>(<span class=hljs-string >&quot;WO&quot;</span>)     <span class=hljs-comment >//Access Policy</span>
+    );
+
+    reg_map<span class=hljs-variable >.add_reg</span>(
+        <span class=hljs-variable >.rg</span>(ct_sanity_reg),
+        <span class=hljs-variable >.offset</span>(<span class=hljs-number >&#x27;h100</span>),
+        <span class=hljs-variable >.rights</span>(<span class=hljs-string >&quot;WO&quot;</span>)
+    );
+
+    reg_map<span class=hljs-variable >.add_reg</span>(
+        <span class=hljs-variable >.rg</span>(ct_status_reg), 
+        <span class=hljs-variable >.offset</span>(<span class=hljs-number >&#x27;h200</span>), 
+        <span class=hljs-variable >.rights</span>(<span class=hljs-string >&quot;RO&quot;</span>)
+    );
+
+    lock_model();
+
+<span class=hljs-keyword >endfunction</span> : build</code></pre> <p>And now, we have our first component written, the UVM diagram now is:</p> <p><img src="/ral/assets/some_percent_diagram_01.png" alt="UVM environment" /></p> <p>In the next section, we will se what is the adapter and how it works.</p> <div class=page-foot > <a href="http://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> João Pedro Melquiades Gomes. Last modified: December 13, 2022. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a> and the <a href="https://julialang.org">Julia programming language</a>. </div> </div> </div> </div> <script src="/ral/libs/pure/ui.min.js"></script> <script src="/ral/libs/highlight/highlight.min.js"></script> <script>hljs.highlightAll();hljs.configure({tabReplace: ' '});</script>
