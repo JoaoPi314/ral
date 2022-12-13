@@ -23,6 +23,9 @@ Basically, this hands-on will be divided into some pages:
 - **Predictor** will tell more about the function of the predictor;
 - **Env** will teach which RAL components must be inserted in Environment;
 - **Take a Breath** is a section that will show the other UVM components that are not part of the RAL, it is a optional section just to make a pause showing new stuffs
+- **Register sequence** will detail what happens in the sequence file using RAL
+- **Test** will teach how to insert the register block at Test and connect to the other RAL components
+- **Results** will show the ambient execution
 - **Source code** will keep all the code developed during the hands-on.
 
 
